@@ -64,6 +64,7 @@ Rules:
 - `https://registry.trustoverip.org/dtg/vsc/<name>` (no version) serves the human version-history page only. It MUST NOT appear in a credential (C4). A machine request for it (`Accept: application/ld+json`) gets `406 Not Acceptable`, so tooling that mistakenly dereferences it fails loudly instead of receiving a term.
 - Names containing `.` or `_` are outside the grammar, so file names such as `vocab.jsonld` and `accept-list.json` can never collide with a predicate.
 - Within the grammar, names follow the verb-form convention in §1.6 (present for a standing relation, past for a completed act).
+- Predicate versions are bare integers (`/witnessed/1`) while context versions carry a `v` (`/dtg/context/v1`). That is deliberate, not an inconsistency: the two are independent axes, and `vN` is the form the already-deployed context uses and the form #52 reserved for "the registry-wide `context/vN.jsonld` axis" (see [bmiller59's #52 comment](https://github.com/trustoverip/dtgwg-cred-spec/issues/52#issuecomment-5684061231)). GOVERNANCE.md carries the same pointer so a reader does not have to find it in the thread.
 - Non-predicate resources live outside `/dtg/vsc/`, under sibling paths that the grammar reserves (`/dtg/context/`, `/dtg/meta/`). This keeps the predicate namespace pure: every `/dtg/vsc/<name>/<n>` is a predicate and nothing else is.
 
 The full published URL map is in §1.7.
@@ -78,11 +79,13 @@ The source-of-truth folder mirrors the IRI path one-to-one, as Trust Tasks does 
 
 ```
 dtgwg-vsc-registry/
-├── README.md                       what this is; how to propose a predicate; the exact IRI forms
+├── README.md                       what this is; how to propose a predicate; the exact IRI forms; "Running your own registry" (§1.9)
 ├── GOVERNANCE.md                   admission criteria, statuses, versioning, review rules (§1.6)
-├── CONTRIBUTING.md                 DCO + ToIP contribution terms (copy the Trust Tasks file)
-├── LICENSE                         Apache-2.0 (present) — see the open question on deliverable type
-├── CODEOWNERS                      routes review of predicates/** to the TF editors
+├── CONTRIBUTING.md                 OWF Contributor License Agreement 1.0 + DCO, copied from Trust Tasks (decision 5)
+├── LICENSE.md                      OWFa 1.0 Final Specification Agreement for the registry content, copied from Trust Tasks (decision 5)
+├── SOURCE_CODE.md                  Apache-2.0 for scripts/, site/, infra/ (the present LICENSE file, renamed)
+├── CODEOWNERS                      named editors for predicates/**, contexts/, meta/ and tooling (decision 6); no placeholders
+├── registry.config.json            the one place the namespace, context base, site name and project name are written (§1.9)
 │
 ├── predicates/                     SOURCE OF TRUTH — one folder per predicate version
 │   ├── endorses/
@@ -131,7 +134,7 @@ dtgwg-vsc-registry/
 │   │   ├── deploy.yml              push to main: build → deploy to Cloudflare Pages → verify
 │   │   └── release.yml             tag v*: build, attach dist tarball + sha256 + attestation to a GitHub Release
 │   ├── dependabot.yml
-│   └── PULL_REQUEST_TEMPLATE/new-predicate.md   the admission checklist (§1.6)
+│   └── PULL_REQUEST_TEMPLATE/new-predicate.md   the admission checklist (§1.6), including the convergence-record link for a term that supersedes a community term
 │
 ├── Dockerfile                      node:24 image so the build can be run locally without a host install
 ├── compose.yaml                    `docker compose run build` / `validate` / `serve`
@@ -211,7 +214,9 @@ Member-by-member mapping to *Predicate Profiles*:
 
 `meta/predicate.schema.json` encodes all of this, including: `id` MUST equal `<namespace>/<name>/<version>`; `id` MUST be NFC; `label.en` and `definition.en` REQUIRED; `doesNotEstablish` MUST be non-empty; `objectSchema` REQUIRED when `objectKind` includes `value` unless `objectSchemaDelegated: true`; `supersededBy` REQUIRED when `status` is `deprecated` and a successor exists.
 
-Community predicates (tier C in #52) use the identical format under their own namespace, with `governedBy` set. Nothing in the schema is specific to `registry.trustoverip.org` except the `id` prefix check, which is parameterised so a community can run the same validator against its own namespace.
+Community predicates (tier C in #52) use the identical format under their own namespace, with `governedBy` set. Nothing in the schema is specific to `registry.trustoverip.org` except the `id` prefix check, which reads the namespace from `registry.config.json` so a community can run the same validator, and the whole registry, against its own namespace (§1.9).
+
+Two members carry the community-to-DTG promotion path (§1.6): `supersedes` MAY name an IRI outside this namespace when a DTG term is minted as the convergence successor of a community term, and in that case the meta-schema REQUIRES `convergenceRecord`, a URL of the commit or pull request in the community's own repository that marks its term `supersededBy` this one. The build checks that the member is present and is an `https` URL; whether it says what it should is for the reviewers, which is why the PR template asks for it (§1.6, *Review*).
 
 ### 1.5 The build
 
@@ -232,13 +237,15 @@ Consolidates the #52 proposal with the amendments the thread produced, under the
 
 **Not a gate.** Verbatim from #52 and the #47 editor's note: the registry curates a shared default set; admission is what a community seeks for convergence, not what it needs in order to issue.
 
-**Admission to `/dtg/vsc/`.** The seven #52 criteria: (1) complete against the meta-schema, including establishes/does-not-establish; (2) on the *attests* side of the statement/establishment test; (3) unilateral; (4) not meaningful only inside one exchange; (5) no existing term with the same meaning; (6) NFC IRI and at least an English label; (7) needed by a DTG specification, or in use or credibly about to be by more than one community. Plus, from the thread: criterion (5) does not block admitting a DTG-namespaced successor to a community term when the community asks for convergence, provided the community term's definition records `supersededBy`/equivalence in *its* namespace (this is the promotion path bmiller59 noted was missing).
+**Admission to `/dtg/vsc/`.** The seven #52 criteria: (1) complete against the meta-schema, including establishes/does-not-establish; (2) on the *attests* side of the statement/establishment test; (3) unilateral; (4) not meaningful only inside one exchange; (5) no existing term with the same meaning; (6) NFC IRI and at least an English label; (7) needed by a DTG specification, or in use or credibly about to be by more than one community. Plus, from the thread: criterion (5) does not block admitting a DTG-namespaced successor to a community term when the community asks for convergence, provided the community term's definition records `supersededBy`/equivalence in *its* namespace (this is the promotion path bmiller59 noted was missing). That proviso is enforced, not honour-system: the DTG term's `predicate.jsonld` names the community IRI in `supersedes` and links the community-side commit or PR in `convergenceRecord` (§1.4), the meta-schema rejects the first without the second, and the `new-predicate.md` PR template has a checklist line for the link so reviewers confirm it points at a merged change that says what it should.
 
 **Versioning.** The bmiller59 text, adopted as is: `<name>/<n>` with a per-predicate positive-integer counter; each version immutable and opaque once published; no forward/backward acceptance; verifiers fail closed on unknown versions; the bare path is never a predicate identifier; a new version follows the same admission path as a new term and MUST record `supersedes`; the predecessor is marked `deprecated` with `supersededBy` in the same PR.
 
 **Statuses (C9).** `draft` (merged, may still change in place), `candidate` (definition frozen except editorial clarification; entry bar: two independent, interoperable consumers of the predicate), `standard` (a `candidate` that has completed a continuous 90-day window with no meaning change), `deprecated` (kept forever, marked, pointing at any replacement). Nothing is deleted. Transitions are PRs that change only `status` and the date fields, so they are cheap to review and the immutability check passes them.
 
 These are Trust Tasks SPEC §5.3 applied to predicates, which is where bmiller59's #52 proposal took them from: TT's `candidate` "MUST demonstrate two independent, interoperable implementations", its `standard` "MUST complete a continuous 90-day stability window with no breaking changes", and its in-place editorial rule is `draft`-only (§5.2). Two deliberate differences: the terminal status is called `deprecated` rather than TT's `retired`, because that is the word the cred-spec's *Predicate Handling* and #52 already use ("only deprecated"), and "no breaking changes" becomes "no meaning change", because a predicate has no non-breaking change to make. The permitted transitions mirror TT §5.3.1: `draft → candidate`, `candidate → standard`, and any status `→ deprecated`; `deprecated` is terminal, and reviving a meaning means a new `<name>/<n+1>` starting at `draft`.
+
+**Promotion gate on hosting.** No predicate is promoted past `draft` until the Pages project serving `registry.trustoverip.org` is in a ToIP-owned Cloudflare account and the custom domain resolves there (decision 2, §2.7). The IRIs themselves are anchored by the CNAME ToIP controls, so a term's identity never depends on whose account is behind it; the gate is about availability and continuity, because a `candidate` term is one other implementations have started to configure against, and its definition has to keep resolving without depending on one member's login. The status-transition PR template asks for the account to be confirmed, and GOVERNANCE.md records the date the handoff completed.
 
 **Review.** Two TF-editor approvals (enforced by branch protection + CODEOWNERS on `predicates/**`) for a new term, a new version, or a status promotion. One approval for a `draft` editorial change or a `profile.md` change that the immutability check confirms touches no normative member. Meaning changes are never permitted; deprecate and add.
 
@@ -250,6 +257,8 @@ These are Trust Tasks SPEC §5.3 applied to predicates, which is where bmiller59
 - **simple past** for a completed observation or act, made once in an identifiable exchange: `witnessed`, `presented`, `vetted`.
 
 The circumstances of a statement (when, where, by what method, in which exchange) are never encoded in the name. They belong in `taskContext`, `validFrom`, and the profile's additional members, or in a verifiable data structure the statement references by digest, as a profile defines. The infinitive is not used: Trust Task slugs are imperative forms (`grant`, `revoke`, `witness/session`), and keeping predicates in a different grammatical form preserves the statement-versus-task distinction at a glance. Every eventive predicate so far requires `taskContext` and every stative one does not, so the convention tracks a property the definition already carries; an explicit `aspect` member checked by the build against `taskContextRequired` is an optional follow-up, not part of this plan.
+
+**Version forms.** Predicate versions are bare integers and context versions are `vN`; GOVERNANCE.md states that this is two independent axes by design, with the pointer to the #52 comment given in §1.2.
 
 **Reserved paths.** `/dtg/context/*` and `/dtg/meta/*` are not vocabularies. Any new vocabulary under `/dtg/` (the "DTG Vocabularies" open question in #52: VDC `scope` terms, VAC `actions`) gets its own sibling of `vsc/` and its own meta-schema; nothing in this plan precludes that, and the site's home page is written to list namespaces, not one namespace.
 
@@ -332,10 +341,21 @@ All statuses are listed with their status so that the verifier, not the registry
 
 ### 1.8 Sequencing for Part 1
 
-1. Scaffold: README, GOVERNANCE, CONTRIBUTING, CODEOWNERS, `meta/`, `scripts/`, `site/`, Docker files, `validate.yml`. Land with zero predicates so the tooling is reviewed on its own.
+1. Scaffold: README (including §1.9), GOVERNANCE, CONTRIBUTING, LICENSE.md, SOURCE_CODE.md, CODEOWNERS with the editors named (decision 6), `registry.config.json`, `meta/`, `scripts/`, `site/`, Docker files, `validate.yml`. Land with zero predicates so the tooling is reviewed on its own.
 2. Record `endorses/1` and `witnessed/1` as `draft`, transcribed from the current cred-spec profiles, each with one validated example. This exercises the format against the two real profiles, as #52 step 3 intends.
-3. Add `contexts/v1.jsonld`, transcribed from the context the cred-spec's *Base Structure* requires, with the `predicate` / `object.value` / `object.id` term definitions the spec's *Statements in the Graph* editor's note anticipates. When #48 formally records the namespace, confirm the IRI prefix held in `meta/` config matches; it is the only place the prefix is written.
+3. Add `contexts/v1.jsonld`, transcribed from the context the cred-spec's *Base Structure* requires, with the `predicate` / `object.value` / `object.id` term definitions the spec's *Statements in the Graph* editor's note anticipates. When #48 formally records the namespace, confirm the `namespace` value in `registry.config.json` matches; it is the only place the prefix is written (§1.9).
 4. First tag once the cred-spec reaches WD03; then the spec's two profiles move here and the spec references the registry, per #52 step 4. Nothing on the wire changes at that point.
+5. No promotion of either term to `candidate` until §2.7 step 5 (the ToIP account handoff) is complete.
+
+### 1.9 Running your own registry
+
+The decentralisation posture of #52 (tier C: a community publishes its own predicates under its own namespace in the same format) is only real if a community can discover that this repository *is* the tooling for that, rather than inferring it from the schema. So the README carries a short section, and the code is arranged so the section is true:
+
+- **One config file.** `registry.config.json` holds every value that names this instance: `namespace` (`https://registry.trustoverip.org/dtg/vsc/`), `contextBase` (`https://registry.trustoverip.org/dtg/context/`), `metaBase`, `siteName`, and `governedBy` (null here; the community's governance-framework URL for a fork). The build reads it, the meta-schema's `id` prefix check reads it, the HTML templates read it, and the build bakes its values into `dist/_worker.js` so the worker's route constants come from the same source.
+- **One deploy field.** `wrangler.toml`'s `name` is the Pages project name; a fork changes it and adds its own two GitHub secrets.
+- **Nothing else.** No IRI, host name or project name is written anywhere other than those two files; `validate.yml` includes a grep that fails if one appears elsewhere, so the guarantee is checked, not remembered.
+
+The README section is five lines: fork; edit `registry.config.json`; edit `name` in `wrangler.toml`; add secrets; push to `main`. It also says what a fork inherits (validation, immutability, negotiation, accept-list generation) and what it does not (admission to `/dtg/vsc/`, which is this registry's, and nothing a fork needs).
 
 ---
 
@@ -544,6 +564,7 @@ Nothing else: no bindings, no KV, no build command (the build happens in CI, not
 2. Add `registry.trustoverip.org` as a custom domain (pending). Send ToIP the exact CNAME line in §2.2.
 3. When the CNAME resolves and the certificate is issued, run `verify.sh` against the production host and turn its CI step from `continue-on-error` to required.
 4. Land `release.yml` before the first tag.
+5. **Account handoff, before any promotion past `draft`.** Re-create the Pages project in the ToIP-owned account, add the custom domain there, ask ToIP to re-point the CNAME, rotate the two GitHub secrets, run `verify.sh`, and record the completion date in GOVERNANCE.md. Until this step is done the promotion gate in §1.6 holds.
 
 ---
 
@@ -551,8 +572,9 @@ Nothing else: no bindings, no KV, no build command (the build happens in CI, not
 
 Each item records the assumption taken on 2026-09-24 so the work can start, and what would change if the TF decides otherwise. Everything else in this plan is a default that can be changed later.
 
-1. **Namespace and context (#48).** *Assumed:* `https://registry.trustoverip.org/dtg/vsc/<name>/<n>` is the predicate IRI form, and the credential `@context` moves to `https://registry.trustoverip.org/dtg/context/v1`, served frozen from `contexts/` in this repository (§1.2, §1.3, §1.8 step 3). *Still needed:* #48 records both, and the cred-spec's `dtg:` notation and `@context` examples are updated in the same editorial pass. *If reversed:* the IRI prefix is held in one `meta/` config value; dropping the context is removing `contexts/` from the build.
-2. **Cloudflare account ownership.** *Assumed:* a TF member's account to start (§2.2). *Still needed:* a ToIP-owned account, requested alongside the CNAME, as the long-term home. *If moved:* re-create the Pages project there, re-point the CNAME, rotate the two GitHub secrets.
+1. **Namespace and context (#48).** *Assumed:* `https://registry.trustoverip.org/dtg/vsc/<name>/<n>` is the predicate IRI form, and the credential `@context` moves to `https://registry.trustoverip.org/dtg/context/v1`, served frozen from `contexts/` in this repository (§1.2, §1.3, §1.8 step 3). *Still needed:* #48 records both, and the cred-spec's `dtg:` notation and `@context` examples are updated in the same editorial pass. *If reversed:* the IRI prefix is the `namespace` value in `registry.config.json`; dropping the context is removing `contexts/` from the build.
+2. **Cloudflare account ownership.** *Assumed:* a TF member's account to start (§2.2). *Gate:* no predicate is promoted past `draft` until the project has moved to a ToIP-owned account (§1.6 *Promotion gate on hosting*, §2.7 step 5). This is the review's point 2, adopted: the IRIs are anchored by ToIP's CNAME either way, but a `candidate` term's availability should not rest on one member's account. *Still needed:* the ToIP-owned account, requested alongside the CNAME. *Handoff:* re-create the Pages project there, re-point the CNAME, rotate the two GitHub secrets, record the date.
 3. **Pages or Workers.** *Assumed:* Cloudflare Pages, because ToIP's zone is on DNSimple and a CNAME is all that has been promised (§2.1), and because the later migration to Workers static assets is a configuration change: same `dist/`, same worker logic, `wrangler.toml` gains an `[assets]` block and a custom-domain route, and the Pages `_worker.js` becomes the Worker entry point. For the record, Cloudflare's own guidance is now "Start new projects with Workers"; Workers serves file requests free and unlimited and counts only `run_worker_first` paths against the quota, while Pages keeps external-DNS custom subdomains and per-branch preview aliases. *Trigger to migrate:* ToIP moves `trustoverip.org` to Cloudflare DNS and issues a Workers deploy token for the account that holds the zone. Both parts are needed: a Workers custom domain binds a hostname to a Worker only when the zone and the Worker are in the same account, so the Worker would deploy into ToIP's account, with the token and account ID as the two GitHub secrets. Delegating only `registry.` to a separate Cloudflare zone is not a route: Cloudflare accepts a subdomain as a zone on Enterprise plans only, and a delegated subdomain becomes a zone apex, which cannot carry the CNAME the Pages setup relies on.
 4. **Status entry bars.** *Assumed:* the §1.6 statuses as written. They are Trust Tasks SPEC §5.3 transposed to predicates, via bmiller59's #52 proposal; the only differences (`deprecated` for `retired`, "no meaning change" for "no breaking changes") are explained there. *Still needed:* nothing, unless the TF wants the entry bars loosened for the first two terms, which arrive as `draft` and are unaffected until promotion.
-5. **Deliverable type and licence.** *Assumed:* Apache-2.0 for everything for now (the existing `LICENSE`). *Still needed:* #52's open question to ToIP staff on what a repo-driven registry is in ToIP terms; if the answer is "a specification deliverable", adopt TT's `CONTRIBUTING.md`/`LICENSE.md` split for the predicate content and keep Apache-2.0 for the tooling.
+5. **Deliverable type and licence.** *Decided, per the review's point 1, rather than deferred:* copy the Trust Tasks arrangement. The registry content (`predicates/`, `contexts/`, `meta/`, GOVERNANCE.md) is published under the OWF Final Specification Agreement 1.0 in `LICENSE.md`; contributions are made under the OWF Contributor License Agreement 1.0 in `CONTRIBUTING.md`, which EasyCLA already enforces on this repository; the tooling (`scripts/`, `site/`, `infra/`) stays Apache-2.0 in `SOURCE_CODE.md`, which is the present `LICENSE` file renamed. All three files are copied from `trustoverip/dtgwg-trust-tasks-tf`. Two alternatives were considered and not taken. Apache-2.0 for the content, as the review suggested: a predicate definition is something implementers *implement*, and Apache-2.0 addresses software copyright and patents, not the commitments that make specification text safe to implement; every ToIP deliverable examined puts content under a JDF-charter IPR mode and keeps Apache-2.0 for code only, including the glossary the review cited, which is itself under OWFa 1.0 with an OWF CLA. CC BY 4.0 with W3C Mode patents, which is the credential spec's own IPR block: the `endorses` and `witnessed` profiles are re-expressed in the registry's definition format by the same editors who wrote the spec text, not copied as prose, so there is no re-licensing question to avoid, and OWFa is the instrument written for a registry of small implementable artifacts, which is what this is. The deliverable label the registry carries in ToIP's process is a separate question for ToIP staff and nothing in the repository waits on it.
+6. **CODEOWNERS editors (review point 5).** *Decided:* the five editors of the DTG Credentials Core Specification are the initial owners of `predicates/**`, `contexts/`, `meta/` and GOVERNANCE.md, since the registry holds content that moves out of that specification and is governed by its rules. From the spec's header, with GitHub handles: Martina Kolpondinos (`@martipos`), Alberto Leon (`@albertoleon7794`), Brendan A. Miller (`@bmiller59`), Drummond Reed (`@talltree`) and Geoff Turk (`@geoffturk`). The tooling paths (`scripts/`, `site/`, `infra/`, `.github/`, `package.json`, `wrangler.toml`, `registry.config.json`) default to `@geoffturk`. A `@trustoverip/<team>` is substituted for the list when the TF creates one. The scaffold PR (§1.8 step 1) lands the file with these handles; it does not land with a placeholder.

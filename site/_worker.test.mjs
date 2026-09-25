@@ -121,6 +121,15 @@ test('trailing slash redirects to the canonical form', async () => {
   assert.equal(r.headers.get('location'), `https://registry.example${NS}/witnessed/1`);
 });
 
+test('the explicit .html form redirects to the extensionless path', async () => {
+  let r = await get(`${NS}/witnessed/1.html`);
+  assert.equal(r.status, 301);
+  assert.equal(r.headers.get('location'), `https://registry.example${NS}/witnessed/1`);
+  r = await get('/index.html');
+  assert.equal(r.status, 301);
+  assert.equal(r.headers.get('location'), 'https://registry.example/');
+});
+
 test('unknown paths are honest 404s, never a page', async () => {
   assert.equal((await get(`${NS}/does-not-exist/1`)).status, 404);
   assert.equal((await get(`${NS}/does-not-exist/1`, 'application/ld+json')).status, 404);

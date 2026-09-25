@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write # the preview job posts its URL as a PR comment
 
 jobs:
   validate:
@@ -53,3 +54,44 @@ jobs:
           name: dist
           path: dist/
           retention-days: 3
+
+  # A preview deployment per pull request, so a reviewer sees the rendered
+  # page of a proposed predicate before merging. Only for branches in this
+  # repository: a fork's PR cannot read the secrets and is validated only.
+  preview:
+    needs: validate
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Deploy preview to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy --branch "${{ github.head_ref }}" --commit-hash ${{ github.event.pull_request.head.sha }} --commit-dirty=true
+      - name: Verify the preview
+        run: node infra/verify.mjs "${{ steps.deploy.outputs.deployment-url }}"
+      - name: Post the preview URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: ${{ steps.deploy.outputs.deployment-url }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          body="Preview deployment for $(git rev-parse --short "${{ github.event.pull_request.head.sha }}"): ${URL}"
+          # One comment per PR, updated in place.
+          existing="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR}/comments" --jq '.[] | select(.body | startswith("Preview deployment for")) | .id' | head -1)"
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${existing}" -f body="$body" >/dev/null
+          else
+            gh pr comment "$PR" --body "$body"
+          fi

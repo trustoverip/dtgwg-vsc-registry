@@ -416,6 +416,7 @@ export function generateRegistry(reg, { outDir, siteDir = path.join(REPO_ROOT, '
   writeFile(outDir, `${ctx}.html`, render.contextIndexPage(reg));
 
   writeFile(outDir, 'index.html', render.homePage(reg));
+  writeFile(outDir, '404.html', render.notFoundPage(reg)); // load-bearing: see render.notFoundPage
 
   // Digest manifest, last, over everything else.
   const files = {};

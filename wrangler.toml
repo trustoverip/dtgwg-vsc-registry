@@ -1,0 +1,9 @@
+# Cloudflare Pages project configuration.
+#
+# `name` is the Pages project name and, with `registry.config.json`, one of the
+# two files that name this registry instance (README, "Running your own
+# registry"). The build happens in CI, not on Cloudflare: deploy.yml uploads
+# dist/ with `wrangler pages deploy`, which reads this file.
+name = "dtgwg-vsc-registry"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-01"

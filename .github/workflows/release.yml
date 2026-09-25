@@ -1,0 +1,82 @@
+name: Release
+
+# A tag v* produces a GitHub Release carrying an archive of the published
+# output, its digest, the accept-list, and a build-provenance attestation, so
+# that implementations can bundle an immutable copy and verify where it came
+# from (PLAN.md §1.7, "Integrity"; GOVERNANCE.md §8). Tags are created by an
+# editor by hand; nothing here creates one.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # the build derives the revision from the tag on HEAD
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run validate
+      - run: npm run build
+
+      - name: Check the build recorded this tag as its revision
+        run: |
+          rev="$(node -p "require('./dist/release.json').revision")"
+          if [ "$rev" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::dist/release.json says revision '$rev', expected '${GITHUB_REF_NAME}'"
+            exit 1
+          fi
+
+      - name: Package
+        run: |
+          mkdir -p release
+          tar -C dist -czf release/dist.tar.gz .
+          ( cd release && sha256sum dist.tar.gz > dist.tar.gz.sha256 )
+          ns_path="$(node -e "import('./scripts/lib/config.mjs').then(m => console.log(m.loadConfig('registry.config.json').namespacePath))")"
+          cp "dist${ns_path}/accept-list.json" release/accept-list.json
+          cp "dist${ns_path}/accept-list.json.sha256" release/accept-list.json.sha256
+          cp dist/release.json release/release.json
+          ls -l release
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            release/dist.tar.gz
+            release/accept-list.json
+
+      - name: Release notes
+        run: |
+          node - <<'JS' > release/notes.md
+          const fs = require('fs');
+          const al = JSON.parse(fs.readFileSync('release/accept-list.json', 'utf8'));
+          const rows = Object.entries(al.predicates).map(([iri, e]) => `| \`${iri}\` | ${e.status} | ${e.objectKind.join(', ')} | ${e.taskContextRequired ? 'required' : 'optional'} |`);
+          console.log(`Registry release **${al.revision}** (commit \`${al.commit.slice(0, 7)}\`), namespace \`${al.namespace}\`.\n`);
+          console.log(rows.length ? `| Term | Status | Object | taskContext |\n|---|---|---|---|\n${rows.join('\n')}\n` : 'No published terms.\n');
+          console.log('**Assets.** `dist.tar.gz` is the complete published output at this revision (unpack and serve, or bundle). `accept-list.json` is what verifiers import; pin `revision` to this release. `release.json` digests every file.\n');
+          console.log('**Verify.** Each asset has a sha256 sidecar, and `dist.tar.gz` and `accept-list.json` carry a Sigstore build-provenance attestation:\n');
+          console.log('```sh\ngh attestation verify dist.tar.gz --repo ' + process.env.GITHUB_REPOSITORY + '\n```');
+          JS
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release/notes.md \
+            release/dist.tar.gz release/dist.tar.gz.sha256 \
+            release/accept-list.json release/accept-list.json.sha256 \
+            release/release.json

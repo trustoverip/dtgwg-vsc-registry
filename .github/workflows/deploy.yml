@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # release.json records the commit and the nearest tag
       - uses: actions/setup-node@v6
@@ -49,7 +49,7 @@ jobs:
     # deploys later, if the task force wants that gate; it needs no setup now.
     environment: production
     steps:
-      - uses: actions/checkout@v6 # for wrangler.toml, registry.config.json and infra/verify.mjs
+      - uses: actions/checkout@v7 # for wrangler.toml, registry.config.json and infra/verify.mjs
       - uses: actions/download-artifact@v8
         with:
           name: dist

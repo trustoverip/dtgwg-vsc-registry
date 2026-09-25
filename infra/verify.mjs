@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-// Verify a deployed registry: node infra/verify.mjs <base-url> [--expect-commit <sha>]
+// Verify a deployed registry: node infra/verify.mjs <base-url> [--expect-commit <sha>] [--wait <seconds>]
 //
+// A fresh Pages deployment answers 404 for a few seconds after `wrangler pages
+// deploy` returns, so the script first waits (default 120 s) for release.json
+// to appear at the base URL, then runs the checks once.
 // Checks each row of the negotiation table (PLAN.md §1.7) against a live host,
 // that an unknown term is a real 404, that the trailing-slash form redirects,
 // and, with --expect-commit, that the deployment is the build of that commit.
@@ -19,9 +22,36 @@ if (!base) {
   console.error('usage: node infra/verify.mjs <base-url> [--expect-commit <sha>]');
   process.exit(2);
 }
+const wi = args.indexOf('--wait');
+const waitSeconds = wi >= 0 ? Number(args[wi + 1]) : 120;
 const config = loadConfig(path.join(ROOT, 'registry.config.json'));
 const ns = config.namespacePath;
 const ctx = config.contextPath;
+
+// Wait for the deployment to propagate.
+{
+  const deadline = Date.now() + waitSeconds * 1000;
+  let attempt = 0;
+  for (;;) {
+    attempt++;
+    let status = 'unreachable';
+    try {
+      status = (await fetch(`${base}/release.json`, { redirect: 'manual' })).status;
+    } catch {
+      /* DNS or TLS not ready yet */
+    }
+    if (status === 200) {
+      if (attempt > 1) console.log(`deployment ready after ${attempt} attempts`);
+      break;
+    }
+    if (Date.now() > deadline) {
+      console.log(`✗ ${base}/release.json still ${status} after ${waitSeconds}s`);
+      process.exit(1);
+    }
+    if (attempt === 1) console.log(`waiting for ${base} (release.json is ${status})`);
+    await new Promise((r) => setTimeout(r, Math.min(5000, 1000 * attempt)));
+  }
+}
 
 let failures = 0;
 const ok = (msg) => console.log(`  ✓ ${msg}`);

@@ -1,0 +1,34 @@
+{
+  "@context": "https://registry.trustoverip.org/dtg/meta/v1/predicate-context.jsonld",
+  "id": "https://registry.trustoverip.org/dtg/vsc/endorses/1",
+  "type": "Predicate",
+  "name": "endorses",
+  "version": 1,
+  "status": "draft",
+  "label": {
+    "en": "endorses"
+  },
+  "definition": {
+    "en": "The issuer asserts something favorable about the subject: a skill, a standing, a reputation. The vocabulary of what may be endorsed is defined by the governing community."
+  },
+  "classification": "evidence",
+  "weighedBy": "The governing VTC or VTN, whose endorsement vocabulary defines what may be endorsed and what weight an endorsement carries.",
+  "objectKind": ["value"],
+  "objectSchema": null,
+  "objectSchemaDelegated": true,
+  "subjectObjectRelationship": null,
+  "additionalMembers": {},
+  "taskContextRequired": false,
+  "minimumIssuerScope": null,
+  "issuer": "A party to a DTG edge with the subject, or a VTA acting under community policy.",
+  "establishes": "That the issuer endorsed the subject with the given payload.",
+  "doesNotEstablish": [
+    "that the endorsement is accurate; the verifiability of an endorsement applies to the issuer's signature, not to the truth of the assertion",
+    "that the issuer is qualified to give it, which is for the governing framework to say",
+    "that the subject holds any membership, authority or status"
+  ],
+  "definedIn": "https://trustoverip.github.io/dtgwg-cred-spec/#the-dtg%3Aendorses-profile-(vec)",
+  "governedBy": null,
+  "supersedes": null,
+  "supersededBy": null
+}

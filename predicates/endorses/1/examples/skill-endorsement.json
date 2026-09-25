@@ -1,0 +1,28 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
+  "issuer": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",
+    "predicate": "https://registry.trustoverip.org/dtg/vsc/endorses/1",
+    "object": {
+      "value": {
+        "type": "SkillEndorsement",
+        "name": "Software Development",
+        "competencyLevel": "expert"
+      }
+    }
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-jcs-2022",
+    "created": "2026-01-06T10:00:00Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    "proofValue": "z3FXQjecWJKT…illustrative…"
+  }
+}

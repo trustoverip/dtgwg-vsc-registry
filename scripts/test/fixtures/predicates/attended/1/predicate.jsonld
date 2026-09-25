@@ -1,0 +1,34 @@
+{
+  "@context": "https://registry.example/meta/v1/predicate-context.jsonld",
+  "id": "https://registry.example/vocab/attended/1",
+  "type": "Predicate",
+  "name": "attended",
+  "version": 1,
+  "status": "draft",
+  "label": { "en": "attended", "nl": "heeft bijgewoond" },
+  "definition": { "en": "The issuer attests that it observed the subject attend the event the object names, in the exchange taskContext identifies." },
+  "classification": "evidence",
+  "weighedBy": "The community whose attendance policy the statement is issued under.",
+  "objectKind": ["id"],
+  "subjectObjectRelationship": null,
+  "additionalMembers": {
+    "attendance": {
+      "required": false,
+      "schema": "https://registry.example/vocab/attended/1/attendance.schema.json",
+      "description": "How attendance was observed."
+    }
+  },
+  "taskContextRequired": true,
+  "minimumIssuerScope": "directed",
+  "issuer": "A member, or a VTA acting according to community policy.",
+  "establishes": "That the issuer attests that, in the exchange identified by taskContext, it observed the subject attend the event object.id names.",
+  "doesNotEstablish": [
+    "that the subject participated in the event beyond being present",
+    "that the subject is a member of any community",
+    "that any consequential action is authorized"
+  ],
+  "definedIn": null,
+  "governedBy": "https://example.community/governance-framework",
+  "supersedes": null,
+  "supersededBy": null
+}

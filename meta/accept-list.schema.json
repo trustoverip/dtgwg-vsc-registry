@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "{{metaBase}}v1/accept-list.schema.json",
+  "title": "DTG VSC accept-list",
+  "description": "The machine-readable list verifiers import at configuration time: every published predicate version, keyed by IRI, with its status and machine-checkable constraints. Every status is listed; the verifier decides its own acceptance floor (candidate and above is the recommended default).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "namespace", "revision", "commit", "generatedAt", "predicates"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri" },
+    "namespace": { "type": "string", "format": "uri" },
+    "revision": {
+      "type": "string",
+      "description": "The release tag this list was built at, or 'unreleased' for a build from an untagged commit. A verifier that pins a revision pins a specific signed release."
+    },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "predicates": {
+      "type": "object",
+      "propertyNames": { "format": "uri" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "objectKind", "taskContextRequired", "minimumIssuerScope", "additionalMembers", "supersededBy"],
+        "properties": {
+          "status": { "enum": ["draft", "candidate", "standard", "deprecated"] },
+          "objectKind": { "type": "array", "items": { "enum": ["id", "digestMultibase", "value"] } },
+          "objectSchema": { "type": ["string", "null"], "format": "uri" },
+          "taskContextRequired": { "type": "boolean" },
+          "minimumIssuerScope": { "enum": ["pairwise", "directed", "public", null] },
+          "additionalMembers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["required"],
+              "properties": {
+                "required": { "type": "boolean" },
+                "schema": { "type": ["string", "null"], "format": "uri" }
+              }
+            }
+          },
+          "supersededBy": { "type": ["string", "null"], "format": "uri" }
+        }
+      }
+    }
+  }
+}

@@ -83,7 +83,7 @@ Two deliberate differences from Trust Tasks: the terminal status is called `depr
 
 ### 4.2 In-place changes
 
-While a version is `draft`, editorial changes (label additions, rewording that does not alter meaning, corrected examples) are made in place. From `candidate` onward, **no change** to a normative member is permitted, including relabelling: the only members that may change are `status`, `since`, `deprecatedOn` and `supersededBy`, and the prose in `profile.md`. The build enforces this by diffing every non-`draft` version against `main`.
+While a version is `draft`, editorial changes (label additions, rewording that does not alter meaning, corrected examples) are made in place. From `candidate` onward, **no change** to a normative member is permitted, including relabeling: the only members that may change are `status`, `since`, `deprecatedOn` and `supersededBy`, and the prose in `profile.md`. The build enforces this by diffing every non-`draft` version against `main`.
 
 ### 4.3 Promotion gate on hosting
 

@@ -1,0 +1,15 @@
+{
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://registry.example/context/v1"],
+  "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
+  "issuer": "did:example:organizer",
+  "validFrom": "2026-09-01T10:00:00Z",
+  "taskContext": "urn:uuid:9d2c1b6e-1d2e-4c7a-9a1f-3f0e6b8c2d11",
+  "taskDigestMultibase": "zQmExampleDigest",
+  "credentialSubject": {
+    "id": "did:example:attendee",
+    "predicate": "https://registry.example/vocab/attended/1",
+    "object": { "id": "https://events.example/2026/summit" },
+    "attendance": { "method": "in-person", "checkedIn": "2026-09-01T09:42:00Z" }
+  },
+  "proof": { "//": "..." }
+}

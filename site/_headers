@@ -1,0 +1,7 @@
+# Static headers for paths the worker passes through unchanged. The worker
+# (site/_worker.js) sets Content-Type, Vary and Cache-Control on negotiated
+# responses itself; these apply to everything.
+/*
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
+  Referrer-Policy: no-referrer

@@ -2,7 +2,7 @@
 
 <!-- `<name>/<n>` — for a new version, name the predecessor and why its meaning had to change. -->
 
-**IRI:** `https://registry.trustoverip.org/dtg/vsc/<name>/<n>`
+**IRI:** `<namespace><name>/<n>` (the namespace is in `registry.config.json`)
 
 ## Summary
 

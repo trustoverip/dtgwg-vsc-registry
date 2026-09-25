@@ -1,0 +1,28 @@
+{
+  "name": "dtgwg-vsc-registry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Build tooling for the DTG VSC predicate registry: validates predicate definitions and generates the published site.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "validate": "node scripts/build-registry.mjs --validate-only",
+    "build": "node scripts/build-registry.mjs",
+    "check:immutability": "node scripts/check-immutability.mjs",
+    "check:instance": "node scripts/check-instance-values.mjs",
+    "test": "node --test \"scripts/**/*.test.mjs\" \"site/**/*.test.mjs\"",
+    "check": "npm run validate && npm run check:immutability && npm run check:instance && npm test && npm run build",
+    "new-predicate": "node scripts/new-predicate.mjs",
+    "serve": "wrangler pages dev dist --port 8788"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "marked": "^15.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

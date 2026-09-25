@@ -98,7 +98,7 @@ Contributions are governed by the Trust Over IP Foundation's contribution proces
 
 - Every commit **MUST** carry a DCO `Signed-off-by` trailer. Use `git commit -s`.
 - By opening a pull request, contributors agree to the Open Web Foundation **Contributor License Agreement** in [`CONTRIBUTING.md`](CONTRIBUTING.md). That agreement grants the patent and copyright rights necessary to incorporate contributions into the published registry. The Linux Foundation's EasyCLA checks this on every pull request.
-- Source code in this repository (`scripts/`, `site/`, `infra/`, build tooling) is contributed under the licence in [`SOURCE_CODE.md`](SOURCE_CODE.md).
+- Source code in this repository (`scripts/`, `site/`, `infra/`, build tooling) is contributed under the license in [`SOURCE_CODE.md`](SOURCE_CODE.md).
 
 ## Licensing
 
@@ -108,7 +108,7 @@ The published registry content (`predicates/`, `contexts/`, `meta/`, `GOVERNANCE
 |---|---|---|
 | `CONTRIBUTING.md` | *Contributor → Working Group* | Rights you grant when you contribute to the registry. |
 | `LICENSE.md` | *Working Group → Implementer* | Rights granted to anyone implementing a published predicate. |
-| `SOURCE_CODE.md` | Both directions, for code | Licence covering source code in this repository. |
+| `SOURCE_CODE.md` | Both directions, for code | License covering source code in this repository. |
 
 This is the same arrangement the [Trust Tasks registry](https://github.com/trustoverip/dtgwg-trust-tasks-tf) uses.
 

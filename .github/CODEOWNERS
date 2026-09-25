@@ -1,0 +1,36 @@
+# DTG VSC Predicate Registry — code ownership
+#
+# Registry content (the predicates, the frozen contexts, the definition format
+# and the rules) is owned by the five editors of the DTG Credentials Core
+# Specification, because the registry holds content that moves out of that
+# specification and is governed by its rules (PLAN.md, decision 6). Branch
+# protection requires two approving reviews from this list for any change
+# under those paths (GOVERNANCE.md, "Review").
+#
+# Replace the list with @trustoverip/<team> when the task force creates one.
+
+# Default — anything not matched below
+*                                  @geoffturk
+
+# Registry content: two editor approvals
+/predicates/                       @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
+/contexts/                         @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
+/meta/                             @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
+/GOVERNANCE.md                     @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
+/LICENSE.md                        @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
+/CONTRIBUTING.md                   @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
+
+# Instance identity: the one file that names this registry
+/registry.config.json              @geoffturk @stormer78
+
+# Build / deploy / tooling
+/scripts/                          @geoffturk @stormer78
+/site/                             @geoffturk @stormer78
+/infra/                            @geoffturk @stormer78
+/.github/                          @geoffturk @stormer78
+/package.json                      @geoffturk @stormer78
+/package-lock.json                 @geoffturk @stormer78
+/wrangler.toml                     @geoffturk @stormer78
+/Dockerfile                        @geoffturk @stormer78
+/compose.yaml                      @geoffturk @stormer78
+/SOURCE_CODE.md                    @geoffturk @stormer78

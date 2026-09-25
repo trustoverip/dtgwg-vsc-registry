@@ -1,0 +1,55 @@
+name: Validate
+
+# Every pull request and every push to main. Deliberately unfiltered by path:
+# a path-filtered job cannot be a required check (a PR touching none of the
+# paths never reports, and a required check then blocks it forever).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The immutability check diffs against the base; the build reads
+          # `git log` for per-predicate dates and `git describe` for the revision.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Validate predicates against the definition format
+        run: npm run validate
+
+      - name: Immutability of published terms
+        env:
+          # On a PR, compare with the branch it targets. On a push to main,
+          # compare with the commit before it.
+          BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
+        run: npm run check:immutability
+
+      - name: No instance-specific value outside registry.config.json
+        run: npm run check:instance
+
+      - name: Unit tests (validator fixtures, worker routing)
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 3

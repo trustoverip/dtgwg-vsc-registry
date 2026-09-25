@@ -1,0 +1,48 @@
+# Local runs of the registry tooling, always inside the container.
+#
+#   docker compose run --rm validate     validate predicates/ against meta/ (no writes)
+#   docker compose run --rm build        validate + generate dist/
+#   docker compose run --rm test         unit tests: validator fixtures, worker routing
+#   docker compose run --rm check        everything CI runs
+#   docker compose run --rm serve        wrangler pages dev on http://localhost:8788
+#   docker compose run --rm shell        a shell in the image
+#
+# `docker compose build` after changing package.json or the Dockerfile.
+
+x-tooling: &tooling
+  build: .
+  image: dtgwg-vsc-registry-tooling
+  working_dir: /app
+  # Run as the invoking user so files the tooling writes (dist/) are not
+  # root-owned in the checkout. Export DOCKER_UID/DOCKER_GID if yours differ.
+  user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
+  volumes:
+    - .:/app
+    - /app/node_modules
+  environment:
+    BASE_REF: ${BASE_REF:-origin/main}
+    HOME: /tmp
+    npm_config_cache: /tmp/npm-cache
+
+services:
+  validate:
+    <<: *tooling
+    command: npm run validate
+  build:
+    <<: *tooling
+    command: npm run build
+  test:
+    <<: *tooling
+    command: npm test
+  check:
+    <<: *tooling
+    command: npm run check
+  serve:
+    <<: *tooling
+    command: npx wrangler pages dev dist --ip 0.0.0.0 --port 8788
+    ports:
+      - "8788:8788"
+  shell:
+    <<: *tooling
+    entrypoint: /bin/bash
+    command: []

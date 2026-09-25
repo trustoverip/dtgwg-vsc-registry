@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "{{metaBase}}v1/predicate.schema.json",
+  "title": "DTG VSC predicate definition",
+  "description": "The definition of one version of one Verifiable Statement Credential predicate. The members are the nine points a predicate profile MUST state under 'Predicate Profiles' in the DTG Credentials Core Specification, plus registry metadata. Tokens in braces are replaced with the registry's own values when this schema is published; a community running its own registry gets its own values.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "@context", "id", "type", "name", "version", "status",
+    "label", "definition", "classification", "objectKind",
+    "subjectObjectRelationship", "additionalMembers", "taskContextRequired",
+    "minimumIssuerScope", "issuer", "establishes", "doesNotEstablish",
+    "definedIn", "governedBy", "supersedes", "supersededBy"
+  ],
+  "properties": {
+    "@context": {
+      "const": "{{metaBase}}v1/predicate-context.jsonld"
+    },
+    "id": {
+      "type": "string",
+      "format": "uri",
+      "description": "The predicate IRI: <namespace><name>/<version>, in NFC, no trailing slash. The registry build checks it against the folder path and the configured namespace."
+    },
+    "type": { "const": "Predicate" },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["draft", "candidate", "standard", "deprecated"] },
+    "since": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the release that made this version non-draft. Required from candidate onward."
+    },
+    "deprecatedOn": { "type": "string", "format": "date" },
+    "label": { "$ref": "#/$defs/languageMap" },
+    "definition": { "$ref": "#/$defs/languageMap" },
+    "classification": {
+      "enum": ["evidence", "status-assertion"],
+      "description": "Profile point 2: evidence weighed by a governing body, or an assertion of status the issuer is entitled to make."
+    },
+    "weighedBy": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "description": "For evidence: who is expected to weigh it."
+    },
+    "objectKind": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["id", "digestMultibase", "value"] },
+      "description": "Profile point 3: which object kinds are permitted."
+    },
+    "objectSchema": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "Schema of the object payload when 'value' is permitted and the profile fixes its shape."
+    },
+    "objectSchemaDelegated": {
+      "type": "boolean",
+      "description": "True when 'value' is permitted but its shape is defined by the governing community rather than this profile (as dtg:endorses does)."
+    },
+    "subjectObjectRelationship": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "description": "Profile point 4: any relationship required between subject, object and issuer."
+    },
+    "additionalMembers": {
+      "type": "object",
+      "description": "Profile point 5: additional credentialSubject members, each REQUIRED or OPTIONAL, with its schema.",
+      "propertyNames": { "pattern": "^[a-zA-Z][a-zA-Z0-9]*$" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["required"],
+        "properties": {
+          "required": { "type": "boolean" },
+          "schema": { "type": ["string", "null"], "format": "uri" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "taskContextRequired": {
+      "type": "boolean",
+      "description": "Profile point 6: whether taskContext (and with it taskDigestMultibase) is REQUIRED."
+    },
+    "minimumIssuerScope": {
+      "enum": ["pairwise", "directed", "public", null],
+      "description": "Profile point 7: the minimum correlation scope the issuer can truthfully declare, or null if the predicate does not constrain it."
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Profile point 8: who may issue the statement."
+    },
+    "establishes": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Profile point 9: what successful verification establishes."
+    },
+    "doesNotEstablish": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Profile point 9: what successful verification explicitly does not establish."
+    },
+    "definedIn": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "Where the profile's normative text lives, if outside this registry."
+    },
+    "governedBy": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "Null for the DTG namespace. For a community predicate, the governance framework that defines who may issue it and how it is weighed."
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "The predecessor version, or a community term this term is the convergence successor of."
+    },
+    "supersededBy": {
+      "type": ["string", "null"],
+      "format": "uri"
+    },
+    "convergenceRecord": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "description": "Required when 'supersedes' names an IRI outside this namespace: the commit or pull request in the community's repository that marks its term superseded by this one."
+    },
+    "seeAlso": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "description": "Informative pointers to terms elsewhere with the same meaning. Verifiers never follow these."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "deprecated" } } },
+      "then": { "required": ["deprecatedOn", "since"] }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["candidate", "standard"] } } },
+      "then": { "required": ["since"] }
+    },
+    {
+      "if": { "properties": { "objectKind": { "type": "array", "contains": { "const": "value" } } } },
+      "then": {
+        "anyOf": [
+          { "properties": { "objectSchema": { "type": "string" } }, "required": ["objectSchema"] },
+          { "properties": { "objectSchemaDelegated": { "const": true } }, "required": ["objectSchemaDelegated"] }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "classification": { "const": "evidence" } } },
+      "then": { "properties": { "weighedBy": { "type": "string" } }, "required": ["weighedBy"] }
+    }
+  ],
+  "$defs": {
+    "languageMap": {
+      "type": "object",
+      "description": "Language-tagged strings. English is required; add every language the defining community uses.",
+      "required": ["en"],
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    }
+  }
+}

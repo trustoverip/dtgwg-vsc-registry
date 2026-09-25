@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.example/vocab/attended/1/attendance.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "method": { "enum": ["in-person", "video"] },
+    "checkedIn": { "type": "string", "format": "date-time" }
+  }
+}

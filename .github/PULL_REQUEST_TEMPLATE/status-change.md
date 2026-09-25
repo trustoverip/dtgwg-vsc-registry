@@ -1,6 +1,6 @@
 ## Status change
 
-**Predicate:** `https://registry.trustoverip.org/dtg/vsc/<name>/<n>`
+**Predicate:** `<namespace><name>/<n>` (the namespace is in `registry.config.json`)
 **Transition:** `<from>` → `<to>`
 
 ## Evidence (GOVERNANCE.md §4)
@@ -9,7 +9,7 @@
 
 **→ `candidate`**
 - [ ] Two independent, interoperable consumers of this predicate exist. Name them, with links:
-- [ ] The hosting gate of GOVERNANCE.md §4.3 is met: the deployment is in a ToIP-owned Cloudflare account and `registry.trustoverip.org` resolves there.
+- [ ] The hosting gate of GOVERNANCE.md §4.3 is met: the deployment is in a Cloudflare account owned by the maintaining organization and the namespace host resolves there.
 
 **→ `standard`**
 - [ ] The version has been `candidate` for a continuous 90 days with no meaning change. `candidate` since:

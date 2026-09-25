@@ -48,7 +48,7 @@ Predicate versions are bare integers (`/witnessed/1`). Context versions carry a 
 
 ### 2.5 Reserved paths
 
-`/dtg/context/` and `/dtg/meta/` are not vocabularies and no predicate name is minted under them. A new vocabulary under `/dtg/` (for example VDC `scope` terms or VAC `actions`) gets its own sibling of `vsc/` and its own definition format.
+`/dtg/context/`, `/dtg/credentials` and `/dtg/meta/` are not vocabularies of predicates and no predicate name is minted under them. `/dtg/context/vN` is a credential context (§3.1) and `/dtg/credentials#` is the unversioned namespace of the type and property IRIs those contexts define. A new vocabulary under `/dtg/` (for example VDC `scope` terms or VAC `actions`) gets its own sibling of `vsc/` and its own definition format.
 
 ## 3. Versioning
 
@@ -59,6 +59,14 @@ Each `<name>/<n>` is **immutable and opaque once published**. "Versioning" here 
 A published predicate **MUST NOT** change meaning. Meaning changes are never permitted: the change is a new version, and the predecessor is marked `deprecated` with `supersededBy` pointing at the successor in the same pull request. Minting a new version follows the same review path as a new term (§6).
 
 Nothing is ever deleted. A deprecated term is published forever, marked, with a pointer to its replacement if one exists.
+
+### 3.1 Contexts
+
+A credential `@context` published under `/dtg/context/vN` is the wire-level shape of every DTG credential, not only the VSC, and the [DTG Credentials Core Specification](https://github.com/trustoverip/dtgwg-cred-spec) is its authority. The registry hosts and freezes it; the specification's editors decide what it contains and when a new version is minted. A new version is minted when the specification adds, renames or retypes a term that credentials carry; nothing else justifies one. The type and property IRIs a context defines live under `https://registry.trustoverip.org/dtg/credentials#`, which carries no version segment: a term keeps its IRI across context versions, as a predicate does.
+
+A published context is **byte-frozen**. It is never edited, not even editorially: additions and renames go in `vN+1`, and every version ever published stays served at its IRI. A context never redefines a term the W3C Verifiable Credentials context defines and protects (`digestMultibase`, for example), because JSON-LD processors reject the redefinition.
+
+Changes under `contexts/` follow the specification's editorial process, not the predicate rules of §5. A pull request that adds a context version is opened by, or approved by, the specification's editors, who are the `contexts/` owners in [CODEOWNERS](.github/CODEOWNERS), and it links the specification pull request that makes the matching change to *Base Structure*. The two land together.
 
 ## 4. Statuses
 
@@ -114,6 +122,8 @@ Changes are made by pull request against `main`. Every commit carries a DCO `Sig
 | New term, new version of a term, or status promotion | Two editors from the `predicates/` owners in [CODEOWNERS](.github/CODEOWNERS) |
 | Deprecation | Two editors |
 | Editorial change to a `draft` version, or to `profile.md` of any version, that the immutability check confirms touches no normative member | One editor |
+| New context version | Two of the `contexts/` owners in CODEOWNERS, with the matching specification pull request linked (§3.1) |
+| Any change to a published context | Refused; the change is a new version (§3.1) |
 | Tooling, site, workflows | One owner of the affected path |
 
 Meaning changes are not reviewed; they are refused. Deprecate and add.

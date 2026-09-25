@@ -1,0 +1,11 @@
+{
+  "$comment": "The one place this registry instance is named. Every IRI prefix, host name and site label the build, the meta-schema, the templates and the worker use comes from here. To run your own registry, change these values and the `name` in wrangler.toml; nothing else in the repository carries an instance-specific value (CI fails if one appears). See README.md, 'Running your own registry'.",
+  "namespace": "https://registry.trustoverip.org/dtg/vsc/",
+  "contextBase": "https://registry.trustoverip.org/dtg/context/",
+  "metaBase": "https://registry.trustoverip.org/dtg/meta/",
+  "siteUrl": "https://registry.trustoverip.org/",
+  "siteName": "DTG VSC Predicate Registry",
+  "maintainer": "Decentralized Trust Graph Working Group, Trust Over IP Foundation",
+  "repository": "https://github.com/trustoverip/dtgwg-vsc-registry",
+  "governedBy": null
+}

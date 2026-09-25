@@ -15,7 +15,8 @@
     "test": "node --test \"scripts/**/*.test.mjs\" \"site/**/*.test.mjs\"",
     "check": "npm run validate && npm run check:immutability && npm run check:instance && npm test && npm run build",
     "new-predicate": "node scripts/new-predicate.mjs",
-    "serve": "wrangler pages dev dist --port 8788"
+    "serve": "wrangler pages dev dist --port 8788",
+    "verify": "node infra/verify.mjs"
   },
   "dependencies": {
     "ajv": "^8.17.1",

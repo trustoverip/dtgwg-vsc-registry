@@ -135,7 +135,7 @@ test('generate: dist layout, accept-list validates against its schema, digests c
   const { acceptList } = generateRegistry(reg, { outDir: out });
 
   for (const rel of [
-    'index.html', '_worker.js', '_headers', 'assets/site.css', 'release.json',
+    'index.html', '404.html', '_worker.js', '_headers', 'assets/site.css', 'release.json',
     'vocab.html', 'vocab/vocab.jsonld', 'vocab/accept-list.json', 'vocab/accept-list.json.sha256',
     'vocab/attended.html', 'vocab/attended/1.html', 'vocab/attended/1/predicate.jsonld',
     'vocab/attended/1/attendance.schema.json', 'vocab/attended/1/examples/in-person.json',

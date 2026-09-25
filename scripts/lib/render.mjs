@@ -195,3 +195,19 @@ export function contextPage(reg, c) {
     alternates: [{ type: 'application/ld+json', href: `${config.contextPath}/${c.version}.jsonld` }]
   });
 }
+
+/**
+ * The not-found page. Its presence at dist/404.html is load-bearing: without
+ * it, Cloudflare Pages answers an unknown path with index.html and a 200 (the
+ * single-page-app fallback), and a mistyped predicate IRI would resolve to a
+ * page instead of failing. With it, Pages serves this page with a 404.
+ */
+export function notFoundPage(reg) {
+  const { config } = reg;
+  const body = `
+<h1>Not found</h1>
+<p>There is nothing at this URL. A predicate IRI has the form <code>${esc(config.namespace)}&lt;name&gt;/&lt;n&gt;</code>; the published terms are listed at <a href="${esc(config.namespacePath)}">${esc(config.namespacePath)}</a>.</p>
+<p>If you followed a predicate IRI from a credential and arrived here, the term is not published by this registry. A verifier configured against this registry rejects such a credential, as the specification's <em>Predicate Handling</em> requires.</p>
+`;
+  return layout(reg, { title: 'Not found', body });
+}

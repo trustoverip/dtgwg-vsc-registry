@@ -72,9 +72,14 @@ export function createHandler({ namespacePath = '{{namespacePath}}', contextPath
       const url = new URL(request.url);
       const path = url.pathname;
 
-      // 1. Canonical form.
+      // 1. Canonical form. A trailing slash, or the explicit `.html` file name
+      // the build emits, both redirect to the extensionless path.
       if (path.length > 1 && path.endsWith('/')) {
         return Response.redirect(url.origin + path.replace(/\/+$/, '') + url.search, 301);
+      }
+      if (path.endsWith('.html')) {
+        const clean = path === '/index.html' ? '/' : path.slice(0, -'.html'.length);
+        return Response.redirect(url.origin + clean + url.search, 301);
       }
 
       // 2. Negotiation. `target` is the asset to fetch; `type` the media type to declare.

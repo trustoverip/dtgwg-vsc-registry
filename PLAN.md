@@ -124,7 +124,7 @@ dtgwg-vsc-registry/
 │   └── _headers                    static headers for paths the worker passes through unchanged
 │
 ├── infra/
-│   └── verify.sh                   curl-based checks against a deployed host (§2.6)
+│   └── verify.mjs                   checks a deployed host against the negotiation table (§2.6)
 │
 ├── dist/                           GENERATED, gitignored; what gets deployed (§1.7)
 │
@@ -269,6 +269,7 @@ The circumstances of a statement (when, where, by what method, in which exchange
 ```
 dist/
 ├── index.html                                   registry home: the namespaces and where the rules live
+├── 404.html                                     load-bearing: without it Pages answers unknown paths with index.html and a 200
 ├── _worker.js, _headers                         copied from site/, tokens filled from registry.config.json
 ├── assets/…
 ├── release.json                                 { revision, commit, builtAt, files: { "<path>": "<sha256>" } }
@@ -526,7 +527,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production               # lets the repo require a reviewer for deploys if the TF wants that gate
     steps:
-      - uses: actions/checkout@v6         # for infra/verify.sh
+      - uses: actions/checkout@v6         # for infra/verify.mjs
       - uses: actions/download-artifact@v8
         with: { name: dist, path: dist/ }
       - uses: cloudflare/wrangler-action@v4
@@ -534,8 +535,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name dtgwg-vsc-registry --branch main --commit-dirty=true
-      - run: ./infra/verify.sh https://dtgwg-vsc-registry.pages.dev
-      - run: ./infra/verify.sh https://registry.trustoverip.org
+      - run: node infra/verify.mjs "${{ steps.deploy.outputs.deployment-url }}" --expect-commit "${{ github.sha }}"
+      - run: node infra/verify.mjs "$(node -p "require('./registry.config.json').siteUrl")"
         continue-on-error: true           # until the CNAME exists
 ```
 
@@ -555,7 +556,7 @@ Nothing else: no bindings, no KV, no build command (the build happens in CI, not
 
 ### 2.6 Verification and operations
 
-- `infra/verify.sh <host>` is the counterpart of TT's `verify.sh`: `curl` each row of the §1.7 table and assert status, `Content-Type`, `Vary`, and that `/dtg/vsc/witnessed/1` with `Accept: application/ld+json` returns a body whose `id` equals the request URL. It also asserts that `/dtg/vsc/witnessed` with a machine `Accept` is 406 and that `/dtg/vsc/does-not-exist/1` is 404. It runs post-deploy in CI and by hand after the CNAME goes live.
+- `infra/verify.mjs <base-url>` is the counterpart of TT's `verify.sh`, in Node so it shares `registry.config.json` with the build: it fetches each row of the §1.7 table and assert status, `Content-Type`, `Vary`, and that `/dtg/vsc/witnessed/1` with `Accept: application/ld+json` returns a body whose `id` equals the request URL. It also asserts that `/dtg/vsc/witnessed` with a machine `Accept` is 406 and that `/dtg/vsc/does-not-exist/1` is 404. It runs post-deploy in CI and by hand after the CNAME goes live.
 - **Rollback.** `git revert` + push is the normal path (it re-deploys). For an emergency, the Pages dashboard can promote any previous deployment to production without a build.
 - **Observability.** Pages gives per-deployment request logs and the Functions invocation count; nothing more is needed for a registry.
 - **Cost.** Free plan covers this until Functions invocations exceed 100k/day; then Workers Paid.
@@ -565,9 +566,9 @@ Nothing else: no bindings, no KV, no build command (the build happens in CI, not
 
 1. Create the Pages project and API token in the chosen account; add the two repository secrets. Land `deploy.yml` and `wrangler.toml`; the first push to `main` publishes the empty-of-predicates site at `dtgwg-vsc-registry.pages.dev`.
 2. Add `registry.trustoverip.org` as a custom domain (pending). Send ToIP the exact CNAME line in §2.2.
-3. When the CNAME resolves and the certificate is issued, run `verify.sh` against the production host and turn its CI step from `continue-on-error` to required.
+3. When the CNAME resolves and the certificate is issued, run `verify.mjs` against the production host and turn its CI step from `continue-on-error` to required.
 4. Land `release.yml` before the first tag.
-5. **Account handoff, before any promotion past `draft`.** Re-create the Pages project in the ToIP-owned account, add the custom domain there, ask ToIP to re-point the CNAME, rotate the two GitHub secrets, run `verify.sh`, and record the completion date in GOVERNANCE.md. Until this step is done the promotion gate in §1.6 holds.
+5. **Account handoff, before any promotion past `draft`.** Re-create the Pages project in the ToIP-owned account, add the custom domain there, ask ToIP to re-point the CNAME, rotate the two GitHub secrets, run `verify.mjs`, and record the completion date in GOVERNANCE.md. Until this step is done the promotion gate in §1.6 holds.
 
 ---
 

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.trustoverip.org/dtg/vsc/witnessed/1/witness-context.schema.json",
+  "title": "witnessContext",
+  "description": "Context of the witnessing event, carried as the optional credentialSubject.witnessContext member of a statement under https://registry.trustoverip.org/dtg/vsc/witnessed/1. Every member is optional. The member set is part of this predicate version and is frozen with it; a new member is a new version.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "type": "string",
+      "description": "Human-readable event name."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Session or nonce identifier."
+    },
+    "method": {
+      "type": "string",
+      "description": "Verification method used, for example in-person-proximity."
+    }
+  }
+}

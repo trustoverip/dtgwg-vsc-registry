@@ -2,7 +2,7 @@
 
 The registry of predicates for the **Verifiable Statement Credential (VSC)** defined in the [DTG Credentials Core Specification](https://github.com/trustoverip/dtgwg-cred-spec), maintained by the Decentralized Trust Graph Working Group (DTGWG) of the [Trust Over IP Foundation](https://trustoverip.org).
 
-> **Status.** Scaffold only. The definition format, build tooling and the first two predicates (`endorses`, `witnessed`) follow in separate pull requests, in the order set out in [PLAN.md](PLAN.md).
+> **Status.** The definition format, build tooling and the first two predicates (`endorses`, `witnessed`, both `draft`) are in. Deployment to `registry.trustoverip.org` follows, in the order set out in [PLAN.md](PLAN.md); until then the IRIs do not resolve.
 
 - **Published registry:** <https://registry.trustoverip.org/dtg/vsc> (once deployed)
 - **Rules:** [`GOVERNANCE.md`](GOVERNANCE.md), admission, versioning, statuses, review

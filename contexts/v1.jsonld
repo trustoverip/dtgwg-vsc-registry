@@ -15,6 +15,7 @@
     "StatementCredential": "https://registry.trustoverip.org/dtg/credentials#StatementCredential",
     "AuthorityCredential": "https://registry.trustoverip.org/dtg/credentials#AuthorityCredential",
 
+    "issuerScope": "https://registry.trustoverip.org/dtg/credentials#issuerScope",
     "taskContext": "https://registry.trustoverip.org/dtg/credentials#taskContext",
     "taskDigestMultibase": {
       "@id": "https://registry.trustoverip.org/dtg/credentials#taskDigestMultibase",

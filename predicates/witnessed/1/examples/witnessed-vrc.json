@@ -5,6 +5,7 @@
   ],
   "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
   "issuer": "did:webvh:QmVzTd9hRkPqLu4WgXyN3c8pT2rJ6mK9sB1dF4gH7jL0n:witness-service.example",
+  "issuerScope": "public",
   "validFrom": "2026-01-06T10:00:00Z",
   "taskContext": "urn:uuid:2c7f5d19-6e0b-4c3d-8a41-9b2e6f0d4c88",
   "taskDigestMultibase": "zQmWhCFfStzUE4HGseiQ1XWi2eEp1GTQEKnt2jyBe7uqzXD",

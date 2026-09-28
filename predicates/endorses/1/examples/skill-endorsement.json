@@ -5,6 +5,7 @@
   ],
   "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
   "issuer": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+  "issuerScope": "directed",
   "validFrom": "2026-01-06T10:00:00Z",
   "credentialSubject": {
     "id": "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",

@@ -8,8 +8,9 @@
 // own registry (README, "Running your own registry"); check-instance-values
 // verifies that nothing else in the tooling hardcodes a value.
 import fs from 'node:fs';
+import path from 'node:path';
 
-const REQUIRED_STRINGS = ['namespace', 'contextBase', 'metaBase', 'siteUrl', 'siteName', 'maintainer', 'repository'];
+const REQUIRED_STRINGS = ['namespace', 'contextBase', 'metaBase', 'siteUrl', 'siteName', 'hostName', 'maintainer', 'repository'];
 const HTTPS_PREFIXES = ['namespace', 'contextBase', 'metaBase', 'siteUrl'];
 
 export const META_VERSION = 'v1';
@@ -53,12 +54,17 @@ export function parseConfig(raw, where = 'registry.config.json') {
     else if (u.origin !== origin) throw new Error(`${where}: "${k}" must share the origin ${origin}; one registry is one site`);
   }
   const ns = new URL(raw.namespace);
+  const namespacePath = stripTrailingSlash(ns.pathname);
   return Object.freeze({
     ...raw,
     metaVersion: META_VERSION,
     origin,
     host: ns.host,
-    namespacePath: stripTrailingSlash(ns.pathname),
+    namespacePath,
+    // The registry's home is the parent of the predicate namespace (`/dtg` for
+    // `/dtg/vsc/`): the namespaces are siblings under it. A namespace directly
+    // under the host root makes `/` the home and there is no separate landing page.
+    registryPath: path.posix.dirname(namespacePath),
     contextPath: stripTrailingSlash(new URL(raw.contextBase).pathname),
     metaPath: stripTrailingSlash(new URL(raw.metaBase).pathname),
     metaContextUrl: `${raw.metaBase}${META_VERSION}/predicate-context.jsonld`,

@@ -4,6 +4,7 @@
   "metaBase": "https://registry.example/meta/",
   "siteUrl": "https://registry.example/",
   "siteName": "Example Community Registry",
+  "hostName": "Example registries",
   "maintainer": "Example Community",
   "repository": "https://github.com/example/registry",
   "governedBy": "https://example.community/governance-framework"

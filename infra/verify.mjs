@@ -33,6 +33,7 @@ const retrySeconds = ri >= 0 ? Number(args[ri + 1]) : 60;
 const config = loadConfig(path.join(ROOT, 'registry.config.json'));
 const ns = config.namespacePath;
 const ctx = config.contextPath;
+const home = config.registryPath;
 
 // Wait for the deployment to propagate.
 {
@@ -109,7 +110,8 @@ async function check(label, request, expectation) {
 
 console.log(`verifying ${base}`);
 
-await check('home is HTML', () => get('/'), { status: 200, typeStart: 'text/html' });
+await check('root is HTML' + (home === '/' ? '' : ` and links to ${home}`), () => get('/'), { status: 200, typeStart: 'text/html', ...(home === '/' ? {} : { bodyIncludes: `href="${home}"` }) });
+if (home !== '/') await check(`${home} → registry home`, () => get(home), { status: 200, typeStart: 'text/html', bodyIncludes: config.siteName });
 await check(`${ns} → HTML`, () => get(ns), { status: 200, typeStart: 'text/html', header: { vary: 'Accept' } });
 await check(`${ns} + ld+json → vocab`, () => get(ns, 'application/ld+json'), { status: 200, typeStart: 'application/ld+json', bodyIncludes: '"@graph"', header: { 'access-control-allow-origin': '*' } });
 const acceptList = await check(`${ns} + json → accept-list`, () => get(ns, 'application/json'), { status: 200, typeStart: 'application/json', bodyIncludes: '"predicates"' });

@@ -146,6 +146,12 @@ test('generate: dist layout, accept-list validates against its schema, digests c
   // No index.html under a term path: the canonical URL must serve without a redirect.
   assert.ok(!fs.existsSync(path.join(out, 'vocab', 'attended', '1', 'index.html')));
 
+  // The fixture's namespace sits directly under the host root, so `/` is the
+  // registry's home itself: no landing page, no "All registries" link.
+  const home = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+  assert.match(home, /<h1>Example Community Registry<\/h1>/);
+  assert.doesNotMatch(home, /All registries/);
+
   // The worker got its paths from the config.
   const worker = fs.readFileSync(path.join(out, '_worker.js'), 'utf8');
   assert.match(worker, /namespacePath = '\/vocab'/);
@@ -175,4 +181,44 @@ test('generate: dist layout, accept-list validates against its schema, digests c
   assert.ok(release.files['vocab/attended/1/predicate.jsonld']);
   assert.ok(!release.files['release.json']);
   assert.equal(release.namespace, NS);
+});
+
+test('a namespace below the root gets a registry home at its parent path and a landing page at /', () => {
+  // The DTG shape: namespace /community/vocab/, so the registry's home is
+  // /community and / is the host's landing page listing it.
+  const root = scratch((r) => {
+    for (const rel of ['registry.config.json', 'predicates/attended/1/predicate.jsonld', 'predicates/attended/1/attendance.schema.json', 'predicates/attended/1/examples/in-person.json']) {
+      const f = path.join(r, rel);
+      fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replaceAll('https://registry.example/', 'https://registry.example/community/'));
+    }
+    const cfgFile = path.join(r, 'registry.config.json');
+    const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+    cfg.siteUrl = 'https://registry.example/'; // the origin every check is relative to; not a prefix
+    fs.writeFileSync(cfgFile, JSON.stringify(cfg));
+  });
+  const reg = loadRegistry({ root, configFile: path.join(root, 'registry.config.json') });
+  assert.deepEqual(validateRegistry(reg), []);
+  assert.equal(reg.config.registryPath, '/community');
+  const out = path.join(root, 'dist');
+  generateRegistry(reg, { outDir: out });
+
+  for (const rel of ['index.html', 'community.html', 'community/vocab.html', 'community/vocab/attended/1.html', 'community/context.html']) {
+    assert.ok(fs.existsSync(path.join(out, rel)), `missing ${rel}`);
+  }
+  const landing = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+  assert.match(landing, /<title>Registries · Example registries<\/title>/);
+  assert.match(landing, /<h1>Example registries<\/h1>/);
+  assert.match(landing, /href="\/community">Example Community Registry</);
+  assert.doesNotMatch(landing, /<header class="site">/); // no registry nav on the host's page
+
+  const home = fs.readFileSync(path.join(out, 'community.html'), 'utf8');
+  assert.match(home, /<title>Home · Example Community Registry<\/title>/);
+  assert.match(home, /<h1>Example Community Registry<\/h1>/);
+  assert.match(home, /<a href="\/community">Example Community Registry<\/a>/); // nav site-name link
+  assert.match(home, /<a href="\/">All registries<\/a>/);
+  assert.match(home, /href="\/community\/vocab"/);
+
+  // Breadcrumbs start at the registry's home, not at /.
+  const term = fs.readFileSync(path.join(out, 'community', 'vocab', 'attended', '1.html'), 'utf8');
+  assert.match(term, /<nav class="crumbs"[^>]*><a href="\/community">Home<\/a>/);
 });

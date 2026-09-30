@@ -8,14 +8,19 @@ export function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function layout(reg, { title, body, alternates = [], crumbs = [] }) {
+// `host: true` renders a page that belongs to the host rather than to this
+// registry (the landing page at `/`): it carries the host-level name in its
+// title and no registry nav, so an umbrella deployment can replace it later
+// without touching anything under the registry's own path.
+function layout(reg, { title, body, alternates = [], crumbs = [], host = false }) {
   const { config } = reg;
   const alt = alternates.map((a) => `<link rel="alternate" type="${esc(a.type)}" href="${esc(a.href)}">`).join('\n    ');
-  const nav = [
-    { href: '/', text: config.siteName },
+  const nav = host ? [] : [
+    { href: config.registryPath, text: config.siteName },
     { href: config.namespacePath, text: 'Predicates' },
     { href: config.contextPath, text: 'Contexts' },
-    { href: `${config.metaPath}/${config.metaVersion}/predicate.schema.json`, text: 'Definition format' }
+    { href: `${config.metaPath}/${config.metaVersion}/predicate.schema.json`, text: 'Definition format' },
+    ...(config.registryPath === '/' ? [] : [{ href: '/', text: 'All registries' }])
   ];
   const crumbHtml = crumbs.length ? `<nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c) => (c.href ? `<a href="${esc(c.href)}">${esc(c.text)}</a>` : `<span>${esc(c.text)}</span>`)).join(' <span class="sep">/</span> ')}</nav>` : '';
   return `<!DOCTYPE html>
@@ -23,14 +28,14 @@ function layout(reg, { title, body, alternates = [], crumbs = [] }) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${esc(title)} · ${esc(config.siteName)}</title>
+    <title>${esc(title)} · ${esc(host ? config.hostName : config.siteName)}</title>
     <link rel="stylesheet" href="/assets/site.css">
     ${alt}
 </head>
 <body>
-<header class="site">
+${nav.length ? `<header class="site">
     <nav aria-label="Site">${nav.map((n) => `<a href="${esc(n.href)}">${esc(n.text)}</a>`).join('')}</nav>
-</header>
+</header>` : ''}
 <main>
 ${crumbHtml}
 ${body}
@@ -55,11 +60,30 @@ function link(url) {
   return url ? `<a href="${esc(url)}"><code>${esc(url)}</code></a>` : '<em>none</em>';
 }
 
+/**
+ * The host's landing page at `/`: the host-level name, one sentence, and the
+ * registries this deployment serves. Written so that an umbrella deployment
+ * can replace it without touching anything under the registry's own path.
+ */
+export function landingPage(reg) {
+  const { config } = reg;
+  const body = `
+<h1>${esc(config.hostName)}</h1>
+<p>Registries served from this host, each under its own path.</p>
+<dl class="resources">
+  <dt><a href="${esc(config.registryPath)}">${esc(config.siteName)}</a></dt>
+  <dd>${esc(config.maintainer)}. The predicate namespace <code>${esc(config.namespace)}</code>, the credential contexts and the definition format, under <code>${esc(config.registryPath)}/</code>.</dd>
+</dl>
+`;
+  return layout(reg, { title: 'Registries', body, host: true });
+}
+
+/** This registry's home (`/dtg`): its namespaces and where the rules live. */
 export function homePage(reg) {
   const { config } = reg;
   const body = `
 <h1>${esc(config.siteName)}</h1>
-<p>Predicates for the Verifiable Statement Credential (VSC) of the <a href="https://github.com/trustoverip/dtgwg-cred-spec">DTG Credentials Core Specification</a>. A predicate is an absolute IRI that a verifier accepts by configuration; every predicate here resolves to its definition at that IRI.</p>
+<p>Predicates for the Verifiable Statement Credential (VSC) of the <a href="https://github.com/trustoverip/dtgwg-cred-spec">DTG Credentials Core Specification</a>, the JSON-LD contexts its credentials list, and the format the predicates are defined in. A predicate is an absolute IRI that a verifier accepts by configuration; every predicate here resolves to its definition at that IRI.</p>
 <dl class="resources">
   <dt><a href="${esc(config.namespacePath)}">${esc(config.namespace)}</a></dt>
   <dd>The predicate namespace: ${reg.predicates.length} published term${reg.predicates.length === 1 ? '' : 's'}. Machine-readable at the same URL: <code>Accept: application/ld+json</code> for the vocabulary graph, <code>Accept: application/json</code> for the <a href="${esc(config.namespacePath)}/accept-list.json">accept-list</a> verifiers import.</dd>
@@ -85,7 +109,7 @@ export function namespaceIndexPage(reg) {
   <td>${p.def.taskContextRequired ? 'required' : 'optional'}</td>
 </tr>`));
   const body = `
-<h1>Predicates</h1>
+<h1>VSC Predicate Registry</h1>
 <p>Namespace <code>${esc(config.namespace)}</code>. Each row is one immutable term; a predicate IRI is <code>${esc(config.namespace)}&lt;name&gt;/&lt;n&gt;</code>, compared byte-exact. The bare <code>&lt;name&gt;</code> path is a documentation page, never a predicate.</p>
 <p>Machine-readable: <a href="${esc(config.namespacePath)}/vocab.jsonld"><code>vocab.jsonld</code></a> (the whole graph) and <a href="${esc(config.namespacePath)}/accept-list.json"><code>accept-list.json</code></a> (for verifier configuration; <a href="${esc(config.namespacePath)}/accept-list.json.sha256">sha256</a>), also served at this URL under content negotiation.</p>
 ${rows.length ? `<table class="index"><thead><tr><th>Term</th><th>Label</th><th>Status</th><th>Kind</th><th>Object</th><th>taskContext</th></tr></thead><tbody>${rows.join('')}</tbody></table>` : '<p><em>No predicates are published yet.</em></p>'}
@@ -93,7 +117,7 @@ ${rows.length ? `<table class="index"><thead><tr><th>Term</th><th>Label</th><th>
   return layout(reg, {
     title: 'Predicates',
     body,
-    crumbs: [{ href: '/', text: 'Home' }, { text: 'Predicates' }],
+    crumbs: [{ href: config.registryPath, text: 'Home' }, { text: 'Predicates' }],
     alternates: [
       { type: 'application/ld+json', href: `${config.namespacePath}/vocab.jsonld` },
       { type: 'application/json', href: `${config.namespacePath}/accept-list.json` }
@@ -115,7 +139,7 @@ export function versionHistoryPage(reg, name, versions) {
 <p class="notice">This page is the version history of <code>${esc(name)}</code>. <strong><code>${esc(config.namespace)}${esc(name)}</code> is not a predicate</strong> and must not appear in a credential; each version below is its own immutable term, and there is no compatibility between versions.</p>
 <table class="index"><thead><tr><th>Term</th><th>Status</th><th>Since</th><th>Deprecated</th><th>Superseded by</th></tr></thead><tbody>${rows.join('')}</tbody></table>
 `;
-  return layout(reg, { title: name, body, crumbs: [{ href: '/', text: 'Home' }, { href: config.namespacePath, text: 'Predicates' }, { text: name }] });
+  return layout(reg, { title: name, body, crumbs: [{ href: config.registryPath, text: 'Home' }, { href: config.namespacePath, text: 'Predicates' }, { text: name }] });
 }
 
 export function predicatePage(reg, p) {
@@ -163,7 +187,7 @@ ${examples ? `<h2>Examples</h2>\n${examples}` : ''}
   return layout(reg, {
     title: `${p.name}/${p.version}`,
     body,
-    crumbs: [{ href: '/', text: 'Home' }, { href: config.namespacePath, text: 'Predicates' }, { href: `${config.namespacePath}/${p.name}`, text: p.name }, { text: p.version }],
+    crumbs: [{ href: config.registryPath, text: 'Home' }, { href: config.namespacePath, text: 'Predicates' }, { href: `${config.namespacePath}/${p.name}`, text: p.name }, { text: p.version }],
     alternates: [{ type: 'application/ld+json', href: `${base}/predicate.jsonld` }]
   });
 }
@@ -176,7 +200,7 @@ export function contextIndexPage(reg) {
 <p>JSON-LD contexts that credentials list. A published context never changes; additions are made under a new version IRI. Each is served at its IRI with <code>Accept: application/ld+json</code> and at <code>&lt;IRI&gt;.jsonld</code>.</p>
 ${rows.length ? `<table class="index"><thead><tr><th>Context</th><th>Published</th></tr></thead><tbody>${rows.join('')}</tbody></table>` : '<p><em>No contexts are published yet.</em></p>'}
 `;
-  return layout(reg, { title: 'Contexts', body, crumbs: [{ href: '/', text: 'Home' }, { text: 'Contexts' }] });
+  return layout(reg, { title: 'Contexts', body, crumbs: [{ href: config.registryPath, text: 'Home' }, { text: 'Contexts' }] });
 }
 
 export function contextPage(reg, c) {
@@ -191,7 +215,7 @@ export function contextPage(reg, c) {
   return layout(reg, {
     title: `Context ${c.version}`,
     body,
-    crumbs: [{ href: '/', text: 'Home' }, { href: config.contextPath, text: 'Contexts' }, { text: c.version }],
+    crumbs: [{ href: config.registryPath, text: 'Home' }, { href: config.contextPath, text: 'Contexts' }, { text: c.version }],
     alternates: [{ type: 'application/ld+json', href: `${config.contextPath}/${c.version}.jsonld` }]
   });
 }

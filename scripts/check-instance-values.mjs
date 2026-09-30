@@ -17,7 +17,7 @@ const config = loadConfig(path.join(ROOT, 'registry.config.json'));
 
 const SCAN = ['scripts', 'site', 'meta', 'infra', '.github/workflows', 'package.json', 'Dockerfile', 'compose.yaml'];
 const SKIP = new Set(['scripts/test/fixtures']); // fixtures carry their own example instance
-const NEEDLES = [config.host, config.siteName].filter(Boolean);
+const NEEDLES = [config.host, config.siteName, config.hostName].filter(Boolean);
 
 const hits = [];
 for (const rel of SCAN) {

@@ -23,7 +23,7 @@
   "doesNotEstablish": [
     "that the presented credential is currently valid or unrevoked; the digest excludes its proof and its status, so the attestation is about those claims at the moment of presentation",
     "that the presented credential's claims are true",
-    "that the subject controls the presented credential's subject identifier, unless the exchange required and checked proof of control",
+    "that the subject controls the presented credential's subject identifier",
     "that the exchange reached its terminal state, which requires the outcome evidence of the specification's Outcome Interpretability rules",
     "that any consequential action is authorized"
   ],

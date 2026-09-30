@@ -8,7 +8,6 @@
   "required": [
     "community",
     "method",
-    "documentClasses",
     "claimsVerified",
     "livenessConfirmed",
     "identityCommitment",
@@ -18,8 +17,8 @@
   "properties": {
     "community": {
       "type": "string",
-      "minLength": 1,
-      "description": "Identifier of the one community the statement was made for. A statement counts for that community only."
+      "pattern": "^did:",
+      "description": "DID of the one community the statement was made for. A statement counts for that community only."
     },
     "method": {
       "enum": ["inPerson", "video", "priorAcquaintance"],
@@ -29,7 +28,7 @@
       "type": "array",
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
-      "description": "Classes of identity document the vetter relied on, for example passport or nationalId. Empty where the vetter relied on prior acquaintance alone. Never a document number, image or portrait."
+      "description": "Classes of identity document the vetter relied on, for example passport or nationalId. Empty or absent where the vetter relied on prior acquaintance alone. Never a document number, image or portrait."
     },
     "claimsVerified": {
       "type": "array",

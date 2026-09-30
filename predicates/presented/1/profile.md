@@ -18,5 +18,5 @@ No implementation issues this statement yet. It enters as `draft` so that the id
 
 - `taskContext` and, with it, `taskDigestMultibase` are required: a presentation is meaningful only relative to the exchange it happened in.
 - The issuer's correlation scope is `directed` at minimum, for the same reason as `witnessed/1`: the witness must be recognizable to the community whose policy it applies.
-- Whether the holder proved control of the presented credential's subject identifier depends on the exchange. This statement does not say it did.
+- A verifier cannot tell from this statement whether the holder proved control of the presented credential's subject identifier, so the statement never establishes it. A verifier that needs it checks it in its own exchange.
 - The example's identifiers and digests are illustrative.

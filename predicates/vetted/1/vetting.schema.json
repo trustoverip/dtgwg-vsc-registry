@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.trustoverip.org/dtg/vsc/vetted/1/vetting.schema.json",
+  "title": "vetted object.value",
+  "description": "The object of a statement under https://registry.trustoverip.org/dtg/vsc/vetted/1: a record of one identity check, by one vetter, for one community. Enumerated values are camelCase, as the VC Data Model 2.0 and Data Integrity use for theirs. The member set is part of this predicate version and is frozen with it once the version leaves draft.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "community",
+    "method",
+    "documentClasses",
+    "claimsVerified",
+    "livenessConfirmed",
+    "identityCommitment",
+    "cardDigestMultibase",
+    "declaredRelationship"
+  ],
+  "properties": {
+    "community": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier of the one community the statement was made for. A statement counts for that community only."
+    },
+    "method": {
+      "enum": ["inPerson", "video", "priorAcquaintance"],
+      "description": "How the check was made."
+    },
+    "documentClasses": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+      "description": "Classes of identity document the vetter relied on, for example passport or nationalId. Empty where the vetter relied on prior acquaintance alone. Never a document number, image or portrait."
+    },
+    "claimsVerified": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Claim types the vetter checked against the person, for example name.legal. Claim values never appear."
+    },
+    "livenessConfirmed": {
+      "type": "boolean",
+      "description": "Whether the vetter confirmed during the session that the person in front of them controlled credentialSubject.id, for example by both parties reading aloud a code derived from the session."
+    },
+    "identityCommitment": {
+      "type": "string",
+      "pattern": "^z[1-9A-HJ-NP-Za-km-z]+$",
+      "description": "A salted commitment to the identity claims the applicant presented, multibase base58btc."
+    },
+    "cardDigestMultibase": {
+      "type": "string",
+      "pattern": "^z[1-9A-HJ-NP-Za-km-z]+$",
+      "description": "Digest of the signed card the applicant presented, computed as the specification's Digest Encoding defines, over the card exactly as the vetter received it."
+    },
+    "declaredRelationship": {
+      "enum": ["none", "communityColleague", "sameEmployer", "family", "otherPersonal"],
+      "description": "The vetter's declared prior relationship to the applicant, so a community can limit how many statements from related vetters it counts."
+    },
+    "attestationTextDigest": {
+      "type": "string",
+      "pattern": "^z[1-9A-HJ-NP-Za-km-z]+$",
+      "description": "Digest of the governance text the vetter was shown before signing, so the version they attested under can be proven. Optional: a community that shows no attestation text has nothing to digest."
+    }
+  }
+}

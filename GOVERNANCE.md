@@ -132,9 +132,9 @@ Meaning changes are not reviewed; they are refused. Deprecate and add.
 
 The registry **MAY** record, in a version's `profile.md` and as an informative `seeAlso` member, that a community term has the same meaning as a DTG term. This is information for the people configuring verifiers. Verifiers never follow it: *Predicate Handling* forbids accepting a predicate on the strength of any published equivalence.
 
-## 8. Releases and what to pin
+## 8. What to pin
 
-Every push to `main` publishes the current state. A tagged release additionally attaches an archive of the published output, its digest and a build-provenance attestation to a GitHub Release, so that implementations can bundle an immutable copy. `accept-list.json` carries the tag it was built from as `revision`; a verifier that pins a revision pins a specific signed release.
+Every push to `main` publishes the current state. The registry is not tagged and has no release versions of its own: its unit of immutability is each `<name>/<n>` and each `context/vN` (§3), and a credential names those IRIs, never a registry version. `accept-list.json` carries the `commit` it was built from, and every build publishes `release.json` with a SHA-256 digest of each file it serves, plus a `.sha256` sidecar beside the machine-readable artifacts. An implementation that bundles an immutable copy, or a verifier that pins what it imported, pins that commit or the digest of the `accept-list.json` it fetched. Which registry IRIs a specification depends on is recorded in that specification's own release.
 
 ## 9. Changing this document
 

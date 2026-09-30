@@ -66,11 +66,7 @@ function gitInfo(root) {
       return '';
     }
   };
-  const commit = run('git rev-parse HEAD') || '0000000';
-  // A release is a tag on this exact commit. A build from any other commit is
-  // 'unreleased', so accept-list.json never claims a revision it is not.
-  const tag = run('git describe --tags --exact-match HEAD');
-  return { commit, revision: tag || 'unreleased' };
+  return { commit: run('git rev-parse HEAD') || '0000000' };
 }
 
 // ---------------------------------------------------------------------------
@@ -349,7 +345,6 @@ export function buildAcceptList(reg) {
   return {
     $schema: reg.config.acceptListSchemaUrl,
     namespace: reg.config.namespace,
-    revision: reg.git.revision,
     commit: reg.git.commit,
     generatedAt: new Date().toISOString(),
     predicates
@@ -431,7 +426,6 @@ export function generateRegistry(reg, { outDir, siteDir = path.join(REPO_ROOT, '
     files[rel] = sha256(fs.readFileSync(path.join(outDir, rel)));
   }
   writeFile(outDir, 'release.json', stableJson({
-    revision: reg.git.revision,
     commit: reg.git.commit,
     builtAt: acceptList.generatedAt,
     namespace: config.namespace,

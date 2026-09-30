@@ -36,7 +36,7 @@ where it was settled.
 | C4 | Versioning of an individual predicate is allowed. The agreed shape is a **flat integer path segment per predicate**: `…/<name>/1`, `…/<name>/2`. Each `<name>/<n>` is its own immutable, opaque term; "versioning" names a deprecate-and-add convention, not a compatibility promise. No forward or backward acceptance between versions; a verifier configured for `<name>/<n>` fails closed on `<name>/<n+1>`. The bare `…/<name>` path is never a predicate identifier. | #52 (bmiller59, endorsed by mitchuski); talltree's fragment form `#v1:witnessed` rejected because a fragment never reaches the server, so versions would not be independently dereferenceable |
 | C5 | Every profile states the nine members of *Predicate Profiles*, including the "establishes / does not establish" block. | cred-spec *Predicate Profiles* |
 | C6 | The registry curates a shared default set. It is not a gate: a community can publish under its own namespace in the same format and verifiers can accept it without admission here. | #52 governance, #47 editor's note |
-| C7 | Verifiers need something to pin: the accept-list revision (or its digest) is a public input to a ZKP presentation, and an `accept-list.json` fetched over TLS needs an integrity story (checksum or signed release). | #52 (mitchuski, bmiller59) |
+| C7 | Verifiers need something to pin: the accept-list commit (or its digest) is a public input to a ZKP presentation, and an `accept-list.json` fetched over TLS needs an integrity story (checksum). | #52 (mitchuski, bmiller59) |
 | C8 | Write out the exact IRI forms; no `www.`, no trailing slash, `https` only. Publish an immutable, bundle-able copy of the context. | #48 (albertoleon7794) |
 | C9 | Statuses aligned with Trust Tasks §5.3: `draft → candidate → standard`, plus `deprecated`. Editorial in-place changes only while `draft`; from `candidate` on, any change is a new version. Nothing is ever deleted. | #52 (bmiller59) |
 | C10 | Human-readable and machine-readable representations served at the **same URL**, by content negotiation, as Trust Tasks §6.2 does for Type URIs. | this brief; TT SPEC §6.2 |
@@ -131,8 +131,7 @@ dtgwg-vsc-registry/
 ├── .github/
 │   ├── workflows/
 │   │   ├── validate.yml            every PR: build in validate-only mode + immutability + worker tests
-│   │   ├── deploy.yml              push to main: build → deploy to Cloudflare Pages → verify
-│   │   └── release.yml             tag v*: build, attach dist tarball + sha256 + attestation to a GitHub Release
+│   │   └── deploy.yml              push to main: build → deploy to Cloudflare Pages → verify
 │   ├── dependabot.yml
 │   └── PULL_REQUEST_TEMPLATE/new-predicate.md   the admission checklist (§1.6), including the convergence-record link for a term that supersedes a community term
 │
@@ -273,7 +272,7 @@ dist/
 ├── 404.html                                     load-bearing: without it Pages answers unknown paths with index.html and a 200
 ├── _worker.js, _headers                         copied from site/, tokens filled from registry.config.json
 ├── assets/…
-├── release.json                                 { revision, commit, builtAt, files: { "<path>": "<sha256>" } }
+├── release.json                                 { commit, builtAt, namespace, files: { "<path>": "<sha256>" } }
 ├── dtg/
 │   ├── vsc.html                                 human index: every predicate, every version, status, labels
 │   ├── vsc/
@@ -318,13 +317,12 @@ What a client gets at each URL (the worker implements this; §2.3):
 
 Every HTML page also carries `<link rel="alternate" type="application/ld+json" href="…/predicate.jsonld">` and the response carries the matching `Link:` header, so a client that does not negotiate can still discover the machine document.
 
-**`accept-list.json`** — the artifact verifiers import at configuration time. Keyed by IRI, one entry per version, carrying only what is machine-checkable, plus the revision to pin (C7):
+**`accept-list.json`** — the artifact verifiers import at configuration time. Keyed by IRI, one entry per version, carrying only what is machine-checkable, plus the commit to pin (C7):
 
 ```json
 {
   "$schema": "https://registry.trustoverip.org/dtg/meta/v1/accept-list.schema.json",
   "namespace": "https://registry.trustoverip.org/dtg/vsc/",
-  "revision": "v2026.10.01",
   "commit": "3f1c2a9…",
   "generatedAt": "2026-10-01T12:00:00Z",
   "predicates": {
@@ -342,15 +340,15 @@ Every HTML page also carries `<link rel="alternate" type="application/ld+json" h
 
 All statuses are listed with their status so that the verifier, not the registry, decides the acceptance floor; the README recommends `candidate` and above by default.
 
-**Integrity (C7).** Three layers, cheapest first: (a) `release.json` and the `.sha256` sidecars, generated on every build; (b) on a tag, `release.yml` attaches `dist.tar.gz`, its digest and a Sigstore build-provenance attestation (`actions/attest-build-provenance`) to a GitHub Release, verifiable offline with `gh attestation verify` — this is also the "immutable, bundle-able copy" implementers asked for in #48; (c) the `revision` in `accept-list.json` is the tag name, so a presentation that pins the accept-list revision pins a specific signed release. Signing the artifacts with a TF-held key is deliberately not proposed: key custody for a WG is a governance problem this registry should not create.
+**Integrity (C7).** Two layers: (a) `release.json` and the `.sha256` sidecars, generated on every build, digest every published file; (b) `accept-list.json` carries the `commit` it was built from, so a presentation pins that commit or the list's digest. The registry is not tagged: each `<name>/<n>` and `context/vN` is already its own immutable unit, and a repo-wide tag would be a second version axis no credential or verifier configuration names (registry #14). A Sigstore build-provenance attestation, if wanted later, belongs in `deploy.yml` over every push to `main`. Signing the artifacts with a TF-held key is deliberately not proposed: key custody for a WG is a governance problem this registry should not create.
 
 ### 1.8 Sequencing for Part 1
 
 1. Scaffold: README (including §1.9), GOVERNANCE, CONTRIBUTING, LICENSE.md, SOURCE_CODE.md, CODEOWNERS with the editors named (decision 6), `registry.config.json`, `meta/`, `scripts/`, `site/`, Docker files, `validate.yml`. Land with zero predicates so the tooling is reviewed on its own.
 2. Record `endorses/1` and `witnessed/1` as `draft`, transcribed from the current cred-spec profiles, each with one validated example. This exercises the format against the two real profiles, as #52 step 3 intends.
 3. Add `contexts/v1.jsonld`, transcribed from the context the cred-spec's *Base Structure* requires, with the `predicate` / `object.value` / `object.id` term definitions the spec's *Statements in the Graph* editor's note anticipates. When #48 formally records the namespace, confirm the `namespace` value in `registry.config.json` matches; it is the only place the prefix is written (§1.9).
-4. First tag once the cred-spec reaches WD03; then the spec's two profiles move here and the spec references the registry, per #52 step 4. Nothing on the wire changes at that point.
-5. No promotion of either term to `candidate` until §2.7 step 5 (the ToIP account handoff) is complete.
+4. Once the registry serves the two IRIs, the spec's two profiles move here and the spec references the registry, per #52 step 4. Nothing on the wire changes at that point. The registry is not tagged; the specification's own release records which registry IRIs it depends on (registry #14).
+5. No promotion of either term to `candidate` until §2.7 step 4 (the ToIP account handoff) is complete.
 
 ### 1.9 Running your own registry
 
@@ -484,7 +482,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with: { fetch-depth: 0 }          # immutability check diffs against main / last tag
+        with: { fetch-depth: 0 }          # immutability check diffs against main
       - uses: actions/setup-node@v6
         with: { node-version: '24', cache: 'npm' }
       - run: npm ci --no-audit --no-fund
@@ -516,7 +514,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with: { fetch-depth: 0 }          # release.json records the commit and nearest tag
+        with: { fetch-depth: 0 }          # the build reads `git log` for per-predicate dates
       - uses: actions/setup-node@v6
         with: { node-version: '24', cache: 'npm' }
       - run: npm ci --no-audit --no-fund
@@ -540,8 +538,6 @@ jobs:
       - run: node infra/verify.mjs "$(node -p "require('./registry.config.json').siteUrl")"
         continue-on-error: true           # until the CNAME exists
 ```
-
-**`release.yml`** — on `push` of tag `v*`. Builds, then `gh release create` with `dist.tar.gz`, `dist.tar.gz.sha256` and `accept-list.json`; runs `actions/attest-build-provenance` over the tarball. Tags are created by an editor after a status PR merges; the workflow never creates tags itself, so a release is a deliberate act (the lesson recorded in TT's `publish.yml`).
 
 Branch protection on `main`: `Validate` required; two approvals for `predicates/**` via CODEOWNERS; linear history; DCO check (ToIP's EasyCLA / DCO app, as on the cred-spec repo).
 
@@ -568,8 +564,7 @@ Nothing else: no bindings, no KV, no build command (the build happens in CI, not
 1. Create the Pages project and API token in the chosen account; add the two repository secrets. Land `deploy.yml` and `wrangler.toml`; the first push to `main` publishes the empty-of-predicates site at `dtgwg-vsc-registry.pages.dev`.
 2. Add `registry.trustoverip.org` as a custom domain (pending). Send ToIP the exact CNAME line in §2.2.
 3. When the CNAME resolves and the certificate is issued, run `verify.mjs` against the production host and turn its CI step from `continue-on-error` to required.
-4. Land `release.yml` before the first tag.
-5. **Account handoff, before any promotion past `draft`.** Re-create the Pages project in the ToIP-owned account, add the custom domain there, ask ToIP to re-point the CNAME, rotate the two GitHub secrets, run `verify.mjs`, and record the completion date in GOVERNANCE.md. Until this step is done the promotion gate in §1.6 holds.
+4. **Account handoff, before any promotion past `draft`.** Re-create the Pages project in the ToIP-owned account, add the custom domain there, ask ToIP to re-point the CNAME, rotate the two GitHub secrets, run `verify.mjs`, and record the completion date in GOVERNANCE.md. Until this step is done the promotion gate in §1.6 holds.
 
 ---
 
@@ -578,7 +573,7 @@ Nothing else: no bindings, no KV, no build command (the build happens in CI, not
 Each item records the assumption taken on 2026-09-24 so the work can start, and what would change if the TF decides otherwise. Everything else in this plan is a default that can be changed later.
 
 1. **Namespace and context (#48).** *Assumed:* `https://registry.trustoverip.org/dtg/vsc/<name>/<n>` is the predicate IRI form, and the credential `@context` moves to `https://registry.trustoverip.org/dtg/context/v1`, served frozen from `contexts/` in this repository (§1.2, §1.3, §1.8 step 3). *Still needed:* #48 records both, and the cred-spec's `dtg:` notation and `@context` examples are updated in the same editorial pass. *If reversed:* the IRI prefix is the `namespace` value in `registry.config.json`; dropping the context is removing `contexts/` from the build.
-2. **Cloudflare account ownership.** *Assumed:* a TF member's account to start (§2.2). *Gate:* no predicate is promoted past `draft` until the project has moved to a ToIP-owned account (§1.6 *Promotion gate on hosting*, §2.7 step 5). This is the review's point 2, adopted: the IRIs are anchored by ToIP's CNAME either way, but a `candidate` term's availability should not rest on one member's account. *Still needed:* the ToIP-owned account, requested alongside the CNAME. *Handoff:* re-create the Pages project there, re-point the CNAME, rotate the two GitHub secrets, record the date.
+2. **Cloudflare account ownership.** *Assumed:* a TF member's account to start (§2.2). *Gate:* no predicate is promoted past `draft` until the project has moved to a ToIP-owned account (§1.6 *Promotion gate on hosting*, §2.7 step 4). This is the review's point 2, adopted: the IRIs are anchored by ToIP's CNAME either way, but a `candidate` term's availability should not rest on one member's account. *Still needed:* the ToIP-owned account, requested alongside the CNAME. *Handoff:* re-create the Pages project there, re-point the CNAME, rotate the two GitHub secrets, record the date.
 3. **Pages or Workers.** *Assumed:* Cloudflare Pages, because ToIP's zone is on DNSimple and a CNAME is all that has been promised (§2.1), and because the later migration to Workers static assets is a configuration change: same `dist/`, same worker logic, `wrangler.toml` gains an `[assets]` block and a custom-domain route, and the Pages `_worker.js` becomes the Worker entry point. For the record, Cloudflare's own guidance is now "Start new projects with Workers"; Workers serves file requests free and unlimited and counts only `run_worker_first` paths against the quota, while Pages keeps external-DNS custom subdomains and per-branch preview aliases. *Trigger to migrate:* ToIP moves `trustoverip.org` to Cloudflare DNS and issues a Workers deploy token for the account that holds the zone. Both parts are needed: a Workers custom domain binds a hostname to a Worker only when the zone and the Worker are in the same account, so the Worker would deploy into ToIP's account, with the token and account ID as the two GitHub secrets. Delegating only `registry.` to a separate Cloudflare zone is not a route: Cloudflare accepts a subdomain as a zone on Enterprise plans only, and a delegated subdomain becomes a zone apex, which cannot carry the CNAME the Pages setup relies on.
 4. **Status entry bars.** *Assumed:* the §1.6 statuses as written. They are Trust Tasks SPEC §5.3 transposed to predicates, via bmiller59's #52 proposal; the only differences (`deprecated` for `retired`, "no meaning change" for "no breaking changes") are explained there. *Still needed:* nothing, unless the TF wants the entry bars loosened for the first two terms, which arrive as `draft` and are unaffected until promotion.
 5. **Deliverable type and license.** *Decided, per the review's point 1, rather than deferred:* copy the Trust Tasks arrangement. The registry content (`predicates/`, `contexts/`, `meta/`, GOVERNANCE.md) is published under the OWF Final Specification Agreement 1.0 in `LICENSE.md`; contributions are made under the OWF Contributor License Agreement 1.0 in `CONTRIBUTING.md`, which EasyCLA already enforces on this repository; the tooling (`scripts/`, `site/`, `infra/`) stays Apache-2.0 in `SOURCE_CODE.md`, which is the present `LICENSE` file renamed. All three files are copied from `trustoverip/dtgwg-trust-tasks-tf`. Two alternatives were considered and not taken. Apache-2.0 for the content, as the review suggested: a predicate definition is something implementers *implement*, and Apache-2.0 addresses software copyright and patents, not the commitments that make specification text safe to implement; every ToIP deliverable examined puts content under a JDF-charter IPR mode and keeps Apache-2.0 for code only, including the glossary the review cited, which is itself under OWFa 1.0 with an OWF CLA. CC BY 4.0 with W3C Mode patents, which is the credential spec's own IPR block: the `endorses` and `witnessed` profiles are re-expressed in the registry's definition format by the same editors who wrote the spec text, not copied as prose, so there is no re-licensing question to avoid, and OWFa is the instrument written for a registry of small implementable artifacts, which is what this is. The deliverable label the registry carries in ToIP's process is a separate question for ToIP staff and nothing in the repository waits on it.

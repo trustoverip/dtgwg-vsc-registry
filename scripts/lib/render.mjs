@@ -41,7 +41,7 @@ ${crumbHtml}
 ${body}
 </main>
 <footer class="site">
-    <p>${esc(config.maintainer)}. Source and issues: <a href="${esc(config.repository)}">${esc(config.repository)}</a>. Revision <code>${esc(reg.git.revision)}</code> (<code>${esc(reg.git.commit.slice(0, 7))}</code>).</p>
+    <p>${esc(config.maintainer)}. Source and issues: <a href="${esc(config.repository)}">${esc(config.repository)}</a>. Commit <code>${esc(reg.git.commit.slice(0, 7))}</code>.</p>
 </footer>
 </body>
 </html>

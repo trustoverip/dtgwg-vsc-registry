@@ -5,15 +5,15 @@
   "description": "The machine-readable list verifiers import at configuration time: every published predicate version, keyed by IRI, with its status and machine-checkable constraints. Every status is listed; the verifier decides its own acceptance floor (candidate and above is the recommended default).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$schema", "namespace", "revision", "commit", "generatedAt", "predicates"],
+  "required": ["$schema", "namespace", "commit", "generatedAt", "predicates"],
   "properties": {
     "$schema": { "type": "string", "format": "uri" },
     "namespace": { "type": "string", "format": "uri" },
-    "revision": {
+    "commit": {
       "type": "string",
-      "description": "The release tag this list was built at, or 'unreleased' for a build from an untagged commit. A verifier that pins a revision pins a specific signed release."
+      "pattern": "^[0-9a-f]{7,40}$",
+      "description": "The registry commit this list was built from. A verifier pins this commit, or the digest of the list it fetched."
     },
-    "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
     "generatedAt": { "type": "string", "format": "date-time" },
     "predicates": {
       "type": "object",

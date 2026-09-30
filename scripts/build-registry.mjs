@@ -42,5 +42,5 @@ console.log(`✓ ${n} predicate version${n === 1 ? '' : 's'}, ${reg.contexts.len
 
 if (!validateOnly) {
   const { acceptList } = generateRegistry(reg, { outDir });
-  console.log(`✓ generated ${path.relative(process.cwd(), outDir) || '.'} (revision ${acceptList.revision}, ${Object.keys(acceptList.predicates).length} accept-list entries)`);
+  console.log(`✓ generated ${path.relative(process.cwd(), outDir) || '.'} (commit ${acceptList.commit.slice(0, 7)}, ${Object.keys(acceptList.predicates).length} accept-list entries)`);
 }

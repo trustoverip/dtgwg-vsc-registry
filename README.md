@@ -2,7 +2,7 @@
 
 The registry of predicates for the **Verifiable Statement Credential (VSC)** defined in the [DTG Credentials Core Specification](https://github.com/trustoverip/dtgwg-cred-spec), maintained by the Decentralized Trust Graph Working Group (DTGWG) of the [Trust Over IP Foundation](https://trustoverip.org).
 
-> **Status.** The definition format, build tooling and the first four predicates (`endorses`, `witnessed`, `vetted`, `presented`, all `draft`) are in, and the registry is served at `registry.trustoverip.org`. The handoff of that deployment to an account the Trust Over IP Foundation owns follows (GOVERNANCE §4.3); until it completes, no predicate is promoted past `draft`.
+> **Status.** The definition format, build tooling and the first four predicates (`endorses`, `witnessed`, `vetted`, `presented`, all `draft`) are in, and the registry is served at `registry.trustoverip.org`. `endorses/1` and `witnessed/1` are the normative definitions of the specification's two core profiles, the VEC and the VWC; the specification refers to them. The handoff of that deployment to an account the Trust Over IP Foundation owns follows (GOVERNANCE §4.3); until it completes, no predicate is promoted past `draft`.
 
 - **Published registry:** <https://registry.trustoverip.org/dtg>, with the predicates at <https://registry.trustoverip.org/dtg/vsc>
 - **Rules:** [`GOVERNANCE.md`](GOVERNANCE.md), admission, versioning, statuses, review
@@ -87,7 +87,7 @@ A new version of an existing predicate is proposed the same way, as `predicates/
 Nothing in the format or the tooling is specific to the DTG namespace. A community that wants to publish its own predicates in the same format, with the same validation, immutability checks, content negotiation and accept-list generation, can run this repository as its own registry:
 
 1. Fork this repository.
-2. Edit [`registry.config.json`](registry.config.json): set `namespace`, `contextBase`, `metaBase`, `siteUrl`, `siteName`, `hostName`, `maintainer`, `repository`, and `governedBy` (the URL of the governance framework that defines who may issue your predicates and how they are weighed).
+2. Edit [`registry.config.json`](registry.config.json): set `namespace`, `contextBase`, `metaBase`, `siteUrl`, `siteName`, `hostName`, `indexName`, `maintainer`, `repository`, and `governedBy` (the URL of the governance framework that defines who may issue your predicates and how they are weighed).
 3. Edit `name` in `wrangler.toml` to your Cloudflare Pages project name.
 4. Add the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets to your fork.
 5. Push to `main`.

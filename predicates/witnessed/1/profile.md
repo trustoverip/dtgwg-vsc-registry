@@ -1,4 +1,4 @@
-A statement under this predicate is a **verifiable witness credential (VWC)**. The predicate is one of the two core profiles the DTG Credentials Core Specification defines; its normative text is the section this definition links under *Defined in*, and this entry records it in the registry's format so that verifiers can configure against it. Nothing on the wire changes when the profile text moves here.
+A statement under this predicate is a **verifiable witness credential (VWC)**, one of the two core profiles the [DTG Credentials Core Specification](https://github.com/trustoverip/dtgwg-cred-spec) names. This entry is the profile's normative definition; the specification's *VWC* section states what the profile is and refers here for its members. Verifiers configure against this entry, as the specification's *Predicate Handling* requires.
 
 ## What is witnessed
 
@@ -16,11 +16,11 @@ The rule is unconditional, and deliberately so. A verifier holding a witness sta
 
 ## What this predicate is not
 
-A statement that a party *presented*, *held* or *received* a credential, where the observed party is the referenced credential's subject and its issuer may have been absent, is a different statement with the observed party as its subject. It is a different predicate, defined in this registry rather than expressed by stretching this one.
+A statement that a party *presented*, *held* or *received* a credential, where the observed party is the referenced credential's subject and its issuer may have been absent, is a different statement with the observed party as its subject. It is a different predicate, defined in this registry rather than expressed by stretching this one: presentation is [`presented/1`](https://registry.trustoverip.org/dtg/vsc/presented/1).
 
 ## Notes for implementers
 
 - `witnessContext` is optional and its three members are all optional. Its member set is frozen with this version; a new member is a new version.
 - The issuer's correlation scope is `directed` at minimum: a witness's identifier must be recognizable to both parties to the witnessed edge and to the community whose policy the attestation is issued under, so a `pairwise` declaration cannot describe it truthfully.
 - The example's identifiers and digests are illustrative. Neither digest is computed from a printed document.
-- The specification currently writes the predicate as `dtg:witnessed`, a documentation shorthand for a placeholder namespace. The IRI on this page is the one decided for the registry; the specification's notation is aligned in an editorial pass (see [cred-spec #48](https://github.com/trustoverip/dtgwg-cred-spec/issues/48)).
+- The specification writes the predicate as `dtg:witnessed`, documentation shorthand for the IRI on this page; on the wire a predicate is always the absolute IRI.

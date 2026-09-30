@@ -109,7 +109,7 @@ export function namespaceIndexPage(reg) {
   <td>${p.def.taskContextRequired ? 'required' : 'optional'}</td>
 </tr>`));
   const body = `
-<h1>VSC Predicate Registry</h1>
+<h1>${esc(config.indexName)}</h1>
 <p>Namespace <code>${esc(config.namespace)}</code>. Each row is one immutable term; a predicate IRI is <code>${esc(config.namespace)}&lt;name&gt;/&lt;n&gt;</code>, compared byte-exact. The bare <code>&lt;name&gt;</code> path is a documentation page, never a predicate.</p>
 <p>Machine-readable: <a href="${esc(config.namespacePath)}/vocab.jsonld"><code>vocab.jsonld</code></a> (the whole graph) and <a href="${esc(config.namespacePath)}/accept-list.json"><code>accept-list.json</code></a> (for verifier configuration; <a href="${esc(config.namespacePath)}/accept-list.json.sha256">sha256</a>), also served at this URL under content negotiation.</p>
 ${rows.length ? `<table class="index"><thead><tr><th>Term</th><th>Label</th><th>Status</th><th>Kind</th><th>Object</th><th>taskContext</th></tr></thead><tbody>${rows.join('')}</tbody></table>` : '<p><em>No predicates are published yet.</em></p>'}

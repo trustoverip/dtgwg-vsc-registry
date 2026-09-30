@@ -1,4 +1,4 @@
-A statement under this predicate is a **verifiable endorsement credential (VEC)**. The predicate is one of the two core profiles the DTG Credentials Core Specification defines; its normative text is the section this definition links under *Defined in*, and this entry records it in the registry's format so that verifiers can configure against it. Nothing on the wire changes when the profile text moves here.
+A statement under this predicate is a **verifiable endorsement credential (VEC)**, one of the two core profiles the [DTG Credentials Core Specification](https://github.com/trustoverip/dtgwg-cred-spec) names. This entry is the profile's normative definition; the specification's *VEC* section states what the profile is and refers here for its members. Verifiers configure against this entry, as the specification's *Predicate Handling* requires.
 
 ## What the object carries
 
@@ -18,4 +18,4 @@ An endorsement is evidence. What "verifiable" means here is that the signature i
 
 - `taskContext` is optional. An endorsement is meaningful standing alone; a community may still require it for endorsements made in a ceremony.
 - The profile places no constraint on the issuer's correlation scope.
-- The specification currently writes the predicate as `dtg:endorses`, a documentation shorthand for a placeholder namespace. The IRI on this page is the one decided for the registry; the specification's notation is aligned in an editorial pass (see [cred-spec #48](https://github.com/trustoverip/dtgwg-cred-spec/issues/48)).
+- The specification writes the predicate as `dtg:endorses`, documentation shorthand for the IRI on this page; on the wire a predicate is always the absolute IRI.

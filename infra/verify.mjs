@@ -16,6 +16,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from '../scripts/lib/config.mjs';
+import { esc } from '../scripts/lib/render.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -111,7 +112,7 @@ async function check(label, request, expectation) {
 console.log(`verifying ${base}`);
 
 await check('root is HTML' + (home === '/' ? '' : ` and links to ${home}`), () => get('/'), { status: 200, typeStart: 'text/html', ...(home === '/' ? {} : { bodyIncludes: `href="${home}"` }) });
-if (home !== '/') await check(`${home} → registry home`, () => get(home), { status: 200, typeStart: 'text/html', bodyIncludes: config.siteName });
+if (home !== '/') await check(`${home} → registry home`, () => get(home), { status: 200, typeStart: 'text/html', bodyIncludes: esc(config.siteName) }); // the page renders it through esc()
 await check(`${ns} → HTML`, () => get(ns), { status: 200, typeStart: 'text/html', header: { vary: 'Accept' } });
 await check(`${ns} + ld+json → vocab`, () => get(ns, 'application/ld+json'), { status: 200, typeStart: 'application/ld+json', bodyIncludes: '"@graph"', header: { 'access-control-allow-origin': '*' } });
 const acceptList = await check(`${ns} + json → accept-list`, () => get(ns, 'application/json'), { status: 200, typeStart: 'application/json', bodyIncludes: '"predicates"' });

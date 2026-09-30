@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const REQUIRED_STRINGS = ['namespace', 'contextBase', 'metaBase', 'siteUrl', 'siteName', 'hostName', 'maintainer', 'repository'];
+const REQUIRED_STRINGS = ['namespace', 'contextBase', 'metaBase', 'siteUrl', 'siteName', 'hostName', 'indexName', 'maintainer', 'repository'];
 const HTTPS_PREFIXES = ['namespace', 'contextBase', 'metaBase', 'siteUrl'];
 
 export const META_VERSION = 'v1';
@@ -55,18 +55,26 @@ export function parseConfig(raw, where = 'registry.config.json') {
   }
   const ns = new URL(raw.namespace);
   const namespacePath = stripTrailingSlash(ns.pathname);
+  const contextPath = stripTrailingSlash(new URL(raw.contextBase).pathname);
+  const metaPath = stripTrailingSlash(new URL(raw.metaBase).pathname);
+  // The registry's home is the parent of the predicate namespace (`/dtg` for
+  // `/dtg/vsc/`): the namespaces are siblings under it. A namespace directly
+  // under the host root makes `/` the home and there is no separate landing page.
+  const registryPath = path.posix.dirname(namespacePath);
+  // The home page is written to `<registryPath>.html`, so it must not be where
+  // another index page goes, or the build silently overwrites that page.
+  for (const [k, p] of [['contextBase', contextPath], ['metaBase', metaPath]]) {
+    if (p === registryPath) throw new Error(`${where}: "${k}" (${p}) is the parent of "namespace", which is where the registry's home page goes; put it beside the namespace instead`);
+  }
   return Object.freeze({
     ...raw,
     metaVersion: META_VERSION,
     origin,
     host: ns.host,
     namespacePath,
-    // The registry's home is the parent of the predicate namespace (`/dtg` for
-    // `/dtg/vsc/`): the namespaces are siblings under it. A namespace directly
-    // under the host root makes `/` the home and there is no separate landing page.
-    registryPath: path.posix.dirname(namespacePath),
-    contextPath: stripTrailingSlash(new URL(raw.contextBase).pathname),
-    metaPath: stripTrailingSlash(new URL(raw.metaBase).pathname),
+    registryPath,
+    contextPath,
+    metaPath,
     metaContextUrl: `${raw.metaBase}${META_VERSION}/predicate-context.jsonld`,
     metaSchemaUrl: `${raw.metaBase}${META_VERSION}/predicate.schema.json`,
     acceptListSchemaUrl: `${raw.metaBase}${META_VERSION}/accept-list.schema.json`

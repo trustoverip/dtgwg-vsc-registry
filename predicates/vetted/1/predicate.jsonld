@@ -1,0 +1,34 @@
+{
+  "@context": "https://registry.trustoverip.org/dtg/meta/v1/predicate-context.jsonld",
+  "id": "https://registry.trustoverip.org/dtg/vsc/vetted/1",
+  "type": "Predicate",
+  "name": "vetted",
+  "version": 1,
+  "status": "draft",
+  "label": {
+    "en": "vetted"
+  },
+  "definition": {
+    "en": "The issuer attests that it checked the subject's claimed identity in a vetting session, by the method and against the document classes the object states."
+  },
+  "classification": "evidence",
+  "weighedBy": "The community named in object.value.community, when it decides admission. A statement is not a decision, and a community may require several from distinct vetters.",
+  "objectKind": ["value"],
+  "objectSchema": "https://registry.trustoverip.org/dtg/vsc/vetted/1/vetting.schema.json",
+  "subjectObjectRelationship": null,
+  "additionalMembers": {},
+  "taskContextRequired": true,
+  "minimumIssuerScope": "directed",
+  "issuer": "A member the community has made eligible to vet, issuing under the member identifier its VMC names. Eligibility is the community's to confer and to withdraw, and a verifier checks it under community policy rather than inferring it from this statement.",
+  "establishes": "That the named member states it carried out the described check on the subject's claimed identity, in the exchange taskContext names.",
+  "doesNotEstablish": [
+    "that the subject's claimed identity is true",
+    "that the vetter was eligible to vet, which is a fact about the community and is checked separately",
+    "that the check was competent",
+    "that the subject has been admitted to any community; admission is a decision the community records, and this statement is one input to it"
+  ],
+  "definedIn": null,
+  "governedBy": null,
+  "supersedes": null,
+  "supersededBy": null
+}

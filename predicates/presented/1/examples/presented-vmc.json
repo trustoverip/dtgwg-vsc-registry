@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
+  "issuer": "did:webvh:QmVzTd9hRkPqLu4WgXyN3c8pT2rJ6mK9sB1dF4gH7jL0n:door-service.example",
+  "issuerScope": "public",
+  "validFrom": "2026-10-02T18:30:00Z",
+  "taskContext": "urn:uuid:9d4e2a17-8c3b-4f6e-a1d0-3b7c5e9f2a64",
+  "taskDigestMultibase": "zQmWhCFfStzUE4HGseiQ1XWi2eEp1GTQEKnt2jyBe7uqzXD",
+  "credentialSubject": {
+    "id": "did:key:z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd",
+    "predicate": "https://registry.trustoverip.org/dtg/vsc/presented/1",
+    "object": {
+      "digestMultibase": "zQmdfTbBqBPQ7VNxZEYEj14VmRuZBkqFbiwReogJgS1zR1n"
+    }
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-jcs-2022",
+    "created": "2026-10-02T18:30:00Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:webvh:QmVzTd9hRkPqLu4WgXyN3c8pT2rJ6mK9sB1dF4gH7jL0n:door-service.example#key-1",
+    "proofValue": "z3FXQjecWJKT…illustrative…"
+  }
+}

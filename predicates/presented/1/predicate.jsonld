@@ -1,0 +1,34 @@
+{
+  "@context": "https://registry.trustoverip.org/dtg/meta/v1/predicate-context.jsonld",
+  "id": "https://registry.trustoverip.org/dtg/vsc/presented/1",
+  "type": "Predicate",
+  "name": "presented",
+  "version": 1,
+  "status": "draft",
+  "label": {
+    "en": "presented"
+  },
+  "definition": {
+    "en": "The issuer attests that it observed the subject present the credential the object names, under the conditions of a specific trust task exchange. The subject is the holder; the credential's issuer need not have been present."
+  },
+  "classification": "evidence",
+  "weighedBy": "The community whose policy the attestation is issued under.",
+  "objectKind": ["digestMultibase"],
+  "subjectObjectRelationship": "credentialSubject.id MUST be the credentialSubject.id of the credential object.digestMultibase names, and a verifier holding that credential MUST check that it is.",
+  "additionalMembers": {},
+  "taskContextRequired": true,
+  "minimumIssuerScope": "directed",
+  "issuer": "A member, or a VTA acting according to VTC policy.",
+  "establishes": "That the issuer attests that, in the exchange identified by taskContext, the subject presented the credential whose claims digest to object.digestMultibase.",
+  "doesNotEstablish": [
+    "that the presented credential is currently valid or unrevoked; the digest excludes its proof and its status, so the attestation is about those claims at the moment of presentation",
+    "that the presented credential's claims are true",
+    "that the subject controls the presented credential's subject identifier",
+    "that the exchange reached its terminal state, which requires the outcome evidence of the specification's Outcome Interpretability rules",
+    "that any consequential action is authorized"
+  ],
+  "definedIn": null,
+  "governedBy": null,
+  "supersedes": null,
+  "supersededBy": null
+}

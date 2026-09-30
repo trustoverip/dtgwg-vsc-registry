@@ -11,7 +11,7 @@ function assets(files) {
   return {
     async fetch(req) {
       const p = new URL(req.url).pathname;
-      const hit = files[p] ?? files[`${p}.html`];
+      const hit = p === '/' ? files['/index.html'] : files[p] ?? files[`${p}.html`];
       if (hit === undefined) return new Response('not found', { status: 404 });
       return new Response(hit, { status: 200 });
     }
@@ -19,7 +19,8 @@ function assets(files) {
 }
 
 const FILES = {
-  '/index.html': '<home>',
+  '/index.html': '<landing>',
+  '/dtg.html': '<registry home>',
   '/dtg/vsc.html': '<index>',
   '/dtg/vsc/vocab.jsonld': '{"@graph":[]}',
   '/dtg/vsc/accept-list.json': '{"predicates":{}}',
@@ -113,6 +114,23 @@ test('context IRI: html page, document under ld+json or json', async () => {
   assert.equal(await r.text(), '{"@context":{}}');
   r = await get(CTX);
   assert.equal(await r.text(), '<contexts>');
+});
+
+test('the host root and the registry home are plain pages outside the negotiated prefixes', async () => {
+  let r = await get('/');
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), '<landing>');
+  assert.match(r.headers.get('content-type'), /^text\/html/);
+  r = await get('/dtg');
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), '<registry home>');
+  assert.match(r.headers.get('content-type'), /^text\/html/);
+  assert.equal(r.headers.get('cache-control'), 'public, max-age=300');
+  r = await get('/dtg', 'application/ld+json'); // no negotiation at the home: the page, whatever is asked for
+  assert.equal(await r.text(), '<registry home>');
+  r = await get('/dtg/');
+  assert.equal(r.status, 301);
+  assert.equal(r.headers.get('location'), 'https://registry.example/dtg');
 });
 
 test('trailing slash redirects to the canonical form', async () => {

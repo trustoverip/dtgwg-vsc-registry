@@ -268,7 +268,8 @@ The circumstances of a statement (when, where, by what method, in which exchange
 
 ```
 dist/
-├── index.html                                   registry home: the namespaces and where the rules live
+├── index.html                                   host landing: the registries served from this host (one today)
+├── dtg.html                                     registry home: the namespaces and where the rules live
 ├── 404.html                                     load-bearing: without it Pages answers unknown paths with index.html and a 200
 ├── _worker.js, _headers                         copied from site/, tokens filled from registry.config.json
 ├── assets/…
@@ -355,7 +356,7 @@ All statuses are listed with their status so that the verifier, not the registry
 
 The decentralization posture of #52 (tier C: a community publishes its own predicates under its own namespace in the same format) is only real if a community can discover that this repository *is* the tooling for that, rather than inferring it from the schema. So the README carries a short section, and the code is arranged so the section is true:
 
-- **One config file.** `registry.config.json` holds every value that names this instance: `namespace` (`https://registry.trustoverip.org/dtg/vsc/`), `contextBase` (`https://registry.trustoverip.org/dtg/context/`), `metaBase`, `siteName`, and `governedBy` (null here; the community's governance-framework URL for a fork). The build reads it, the meta-schema's `id` prefix check reads it, the HTML templates read it, and the build bakes its values into `dist/_worker.js` so the worker's route constants come from the same source.
+- **One config file.** `registry.config.json` holds every value that names this instance: `namespace` (`https://registry.trustoverip.org/dtg/vsc/`), `contextBase` (`https://registry.trustoverip.org/dtg/context/`), `metaBase`, `siteName`, `hostName` (the heading of the landing page at `/`), and `governedBy` (null here; the community's governance-framework URL for a fork). The registry's home path is derived from `namespace` (its parent segment, `/dtg`), so the site has the same shape at any host: `/` lists the registries served, the registry's home sits at the parent of its namespace, and the namespaces are siblings beneath it. The build reads it, the meta-schema's `id` prefix check reads it, the HTML templates read it, and the build bakes its values into `dist/_worker.js` so the worker's route constants come from the same source.
 - **One deploy field.** `wrangler.toml`'s `name` is the Pages project name; a fork changes it and adds its own two GitHub secrets.
 - **Nothing else.** No IRI, host name or project name is written anywhere other than those two files; `validate.yml` includes a grep that fails if one appears elsewhere, so the guarantee is checked, not remembered.
 

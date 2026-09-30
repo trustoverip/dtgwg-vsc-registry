@@ -415,7 +415,14 @@ export function generateRegistry(reg, { outDir, siteDir = path.join(REPO_ROOT, '
   }
   writeFile(outDir, `${ctx}.html`, render.contextIndexPage(reg));
 
-  writeFile(outDir, 'index.html', render.homePage(reg));
+  // The registry's home is the parent of the namespace (`/dtg`); `/` is the
+  // host's landing page. A namespace directly under the root collapses the two.
+  if (config.registryPath === '/') {
+    writeFile(outDir, 'index.html', render.homePage(reg));
+  } else {
+    writeFile(outDir, 'index.html', render.landingPage(reg));
+    writeFile(outDir, `${config.registryPath}.html`, render.homePage(reg));
+  }
   writeFile(outDir, '404.html', render.notFoundPage(reg)); // load-bearing: see render.notFoundPage
 
   // Digest manifest, last, over everything else.

@@ -4,7 +4,7 @@ The registry of predicates for the **Verifiable Statement Credential (VSC)** def
 
 > **Status.** The definition format, build tooling and the first four predicates (`endorses`, `witnessed`, `vetted`, `presented`, all `draft`) are in, and the registry is served at `registry.trustoverip.org`. The handoff of that deployment to an account the Trust Over IP Foundation owns follows (GOVERNANCE §4.3); until it completes, no predicate is promoted past `draft`.
 
-- **Published registry:** <https://registry.trustoverip.org/dtg/vsc> (once deployed)
+- **Published registry:** <https://registry.trustoverip.org/dtg>, with the predicates at <https://registry.trustoverip.org/dtg/vsc>
 - **Rules:** [`GOVERNANCE.md`](GOVERNANCE.md), admission, versioning, statuses, review
 - **Design and deployment plan:** [`PLAN.md`](PLAN.md)
 - **Definition format:** `meta/predicate.schema.json` (arrives with the tooling)
@@ -45,6 +45,8 @@ One URL serves both people and machines, by HTTP content negotiation:
 
 | URL | `Accept: text/html` (or absent) | `Accept: application/ld+json` | `Accept: application/json` |
 |---|---|---|---|
+| `/` | the host's landing page: the registries served from `registry.trustoverip.org` | the same page | the same page |
+| `/dtg` | this registry's home: its namespaces and where the rules live | the same page | the same page |
 | `/dtg/vsc` | index of every predicate | `vocab.jsonld`, the whole graph | `accept-list.json`, for verifier import |
 | `/dtg/vsc/<name>` | version history | 406 | 406 |
 | `/dtg/vsc/<name>/<n>` | the profile page | the definition | 406 |
@@ -85,12 +87,12 @@ A new version of an existing predicate is proposed the same way, as `predicates/
 Nothing in the format or the tooling is specific to the DTG namespace. A community that wants to publish its own predicates in the same format, with the same validation, immutability checks, content negotiation and accept-list generation, can run this repository as its own registry:
 
 1. Fork this repository.
-2. Edit [`registry.config.json`](registry.config.json): set `namespace`, `contextBase`, `metaBase`, `siteUrl`, `siteName`, `maintainer`, `repository`, and `governedBy` (the URL of the governance framework that defines who may issue your predicates and how they are weighed).
+2. Edit [`registry.config.json`](registry.config.json): set `namespace`, `contextBase`, `metaBase`, `siteUrl`, `siteName`, `hostName`, `maintainer`, `repository`, and `governedBy` (the URL of the governance framework that defines who may issue your predicates and how they are weighed).
 3. Edit `name` in `wrangler.toml` to your Cloudflare Pages project name.
 4. Add the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets to your fork.
 5. Push to `main`.
 
-Those two files are the only places an instance-specific value is written; the CI validation fails if one appears anywhere else. What a fork does not inherit is admission to `/dtg/vsc/`, which is this registry's, and which a fork does not need: a verifier accepts your namespace by configuration exactly as it accepts this one.
+Those two files are the only places an instance-specific value is written; the CI validation fails if one appears anywhere else. The site takes the same shape at your host: `/` is a landing page naming the host (`hostName`) and listing the registries it serves, and the registry's own home is the parent path of `namespace` (`/dtg` here), with the predicates, contexts and definition format beneath it. A namespace directly under the host root makes `/` the registry's home and there is no separate landing page. What a fork does not inherit is admission to `/dtg/vsc/`, which is this registry's, and which a fork does not need: a verifier accepts your namespace by configuration exactly as it accepts this one.
 
 ## Contributing
 

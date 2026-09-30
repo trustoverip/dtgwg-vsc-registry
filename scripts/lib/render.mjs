@@ -92,7 +92,7 @@ export function homePage(reg) {
   <dt><a href="${esc(config.metaPath)}/${esc(config.metaVersion)}/predicate.schema.json">${esc(config.metaBase)}${esc(config.metaVersion)}/</a></dt>
   <dd>The definition format: the JSON Schema every predicate definition validates against, its JSON-LD context, and the accept-list schema.</dd>
 </dl>
-<p>Rules for admission, versioning and review are in <a href="${esc(config.repository)}/blob/main/GOVERNANCE.md">GOVERNANCE.md</a>. Released archives with digests and provenance are on the <a href="${esc(config.repository)}/releases">releases page</a>.</p>
+<p>Rules for admission, versioning and review are in <a href="${esc(config.repository)}/blob/main/GOVERNANCE.md">GOVERNANCE.md</a>.</p>
 `;
   return layout(reg, { title: 'Home', body });
 }

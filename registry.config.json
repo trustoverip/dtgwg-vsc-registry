@@ -6,6 +6,7 @@
   "siteUrl": "https://registry.trustoverip.org/",
   "siteName": "DTG Registry",
   "hostName": "Trust Over IP registries",
+  "indexName": "VSC Predicate Registry",
   "maintainer": "Decentralized Trust Graph Working Group, Trust Over IP Foundation",
   "repository": "https://github.com/trustoverip/dtgwg-vsc-registry",
   "governedBy": null

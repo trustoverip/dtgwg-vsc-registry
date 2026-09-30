@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { loadRegistry, validateRegistry, generateRegistry } from './lib/registry.mjs';
+import { parseConfig } from './lib/config.mjs';
 
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), 'test', 'fixtures');
 const NS = 'https://registry.example/vocab/';
@@ -217,8 +218,19 @@ test('a namespace below the root gets a registry home at its parent path and a l
   assert.match(home, /<a href="\/community">Example Community Registry<\/a>/); // nav site-name link
   assert.match(home, /<a href="\/">All registries<\/a>/);
   assert.match(home, /href="\/community\/vocab"/);
+  assert.match(fs.readFileSync(path.join(out, 'community', 'vocab.html'), 'utf8'), /<h1>Predicates<\/h1>/); // indexName, from config
 
   // Breadcrumbs start at the registry's home, not at /.
   const term = fs.readFileSync(path.join(out, 'community', 'vocab', 'attended', '1.html'), 'utf8');
   assert.match(term, /<nav class="crumbs"[^>]*><a href="\/community">Home<\/a>/);
+});
+
+test('config: a context or meta base at the parent of the namespace is refused', () => {
+  const base = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'registry.config.json'), 'utf8'));
+  const nested = { ...base, namespace: 'https://registry.example/reg/vsc/', contextBase: 'https://registry.example/reg/context/', metaBase: 'https://registry.example/reg/meta/' };
+  assert.equal(parseConfig(nested).registryPath, '/reg');
+  // The home page would be written to reg.html, over the contexts index.
+  assert.throws(() => parseConfig({ ...nested, contextBase: 'https://registry.example/reg/' }), /"contextBase" \(\/reg\) is the parent of "namespace"/);
+  assert.throws(() => parseConfig({ ...nested, metaBase: 'https://registry.example/reg/' }), /"metaBase" \(\/reg\)/);
+  assert.throws(() => parseConfig({ ...base, indexName: undefined }), /"indexName" is required/);
 });

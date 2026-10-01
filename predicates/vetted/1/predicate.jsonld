@@ -12,7 +12,7 @@
     "en": "The issuer attests that it checked the subject's claimed identity in a vetting session, by the method and against the document classes the object states."
   },
   "classification": "evidence",
-  "weighedBy": "The community named in object.value.community, when it decides admission. A statement is not a decision, and a community may require several from distinct vetters.",
+  "weighedBy": "The community named in object.value.community, when it decides admission or personhood. A statement is not a decision. A community may require several from distinct vetters, may record its own check as a statement it issues for itself, or both.",
   "objectKind": ["value"],
   "objectSchema": "https://registry.trustoverip.org/dtg/vsc/vetted/1/vetting.schema.json",
   "subjectObjectRelationship": null,

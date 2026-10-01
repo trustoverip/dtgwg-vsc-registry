@@ -19,8 +19,7 @@
         "method": "inPerson",
         "documentClasses": ["nationalId"],
         "claimsVerified": ["name.legal"],
-        "livenessConfirmed": true,
-        "declaredRelationship": "none"
+        "livenessConfirmed": true
       }
     }
   },

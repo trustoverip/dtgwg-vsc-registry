@@ -2,6 +2,8 @@ A statement under this predicate records one peer identity check. An existing me
 
 The community itself may also be the issuer. When its own operators check a member's identity, at a desk or in person, the community records that check as a statement under its own DID. It does not mint a separate credential type for it. Every identity check in the graph then has one shape, whoever made it.
 
+A statement the community issues for itself carries none of the three vetter-only members: `identityCommitment`, `cardDigestMultibase` and `declaredRelationship`. That is a requirement, not an omission for convenience. The salt behind `identityCommitment` travels to vetters inside the card and never to the community. A community holding it could test candidate values against every vetter's commitment, which is exactly what the construction exists to prevent. The community links its own statement to its vetters' statements by the subject identifier, not by commitment.
+
 The DTG Credentials Core Specification uses this profile as its informative worked example of a community-defined predicate, under an illustrative community namespace. This entry is the normative definition of the profile in the DTG namespace, so that communities running peer vetting can share one identifier for it. Where the two differ, this entry governs.
 
 ## Why its own predicate
@@ -15,7 +17,7 @@ A vetting statement is also made before any edge exists. The vetter and the appl
 
 ## What the object carries
 
-The object is a `value` whose shape this profile fixes, in `vetting.schema.json`:
+The object is a `value` whose shape this profile fixes, in `vetting.schema.json`. The three vetter-only members are present together or absent together, and the schema enforces that with `dependentRequired`:
 
 | Member | Meaning |
 |---|---|
@@ -24,9 +26,9 @@ The object is a `value` whose shape this profile fixes, in `vetting.schema.json`
 | `documentClasses` | Classes of identity document relied on, for example `passport`. Empty or absent for `priorAcquaintance`. Never a document number, image or portrait. |
 | `claimsVerified` | Claim *types* checked against the person, for example `name.legal`. Claim values never appear. |
 | `livenessConfirmed` | Whether the vetter confirmed, during the session, that the person in front of them controlled `credentialSubject.id`. |
-| `identityCommitment` | A salted commitment to the identity claims the applicant presented. Present whenever a card was presented, so a vetter's statement always carries it. A community recording its own check without a card may omit it. |
-| `cardDigestMultibase` | Digest of the signed card the applicant presented, over the card exactly as the vetter received it. It lets a dispute identify the exact card relied on without the community ever receiving it. Present and absent on the same terms as `identityCommitment`. |
-| `declaredRelationship` | `none`, `communityColleague`, `sameEmployer`, `family` or `otherPersonal`, so a community can limit how many statements from related vetters it counts. A community issuing for itself declares `none`. |
+| `identityCommitment` | A salted commitment to the identity claims the applicant presented. Vetter-only: a vetter's statement always carries it, and a community-issued statement never does (see above). |
+| `cardDigestMultibase` | Digest of the signed card the applicant presented, over the card exactly as the vetter received it. It lets a dispute identify the exact card relied on without the community ever receiving it. Vetter-only, on the same terms as `identityCommitment`. |
+| `declaredRelationship` | `none`, `communityColleague`, `sameEmployer`, `family` or `otherPersonal`, so a community can limit how many statements from related vetters it counts. Vetter-only: the community is the party weighing the statements, so a statement it issues for itself does not carry this member. |
 | `attestationTextDigest` | Optional. Digest of the governance text the vetter was shown before signing. |
 
 Enumerated values are camelCase, the convention the VC Data Model 2.0 and Data Integrity use for their own values (`assertionMethod`, `revocation`). The specification's worked example is aligned to the same spelling.

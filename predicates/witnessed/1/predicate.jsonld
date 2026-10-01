@@ -16,7 +16,7 @@
   "classification": "evidence",
   "weighedBy": "The community whose witnessing policy the attestation is issued under.",
   "objectKind": ["digestMultibase"],
-  "subjectObjectRelationship": "credentialSubject.id MUST be the DID of the issuer of the credential object.digestMultibase names, and a verifier holding that credential MUST check that it is. This binds each statement to one direction of the edge it attests.",
+  "subjectObjectRelationship": "credentialSubject.id MUST be the DID of the issuer of the credential object.digestMultibase names, and a verifier holding that credential MUST check that it is. This binds each statement to one direction of the edge it attests. Where one witnessing event forms both edge credentials of a complete DTG edge (two VRCs, or the grant and acknowledgement VMCs of a membership edge), the witness SHOULD issue one statement per direction.",
   "additionalMembers": {
     "witnessContext": {
       "required": false,

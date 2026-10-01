@@ -19,13 +19,14 @@
   "additionalMembers": {},
   "taskContextRequired": true,
   "minimumIssuerScope": "directed",
-  "issuer": "A member the community has made eligible to vet, issuing under the member identifier its VMC names. Eligibility is the community's to confer and to withdraw, and a verifier checks it under community policy rather than inferring it from this statement.",
-  "establishes": "That the named member states it carried out the described check on the subject's claimed identity, in the exchange taskContext names.",
+  "issuer": "Either a member the community has made eligible to vet, issuing under the member identifier its VMC names, or the community named in object.value.community itself, issuing under its own DID to record a check its operators carried out. A member's eligibility is the community's to confer and to withdraw, and a verifier checks it under community policy rather than inferring it from this statement.",
+  "establishes": "That the issuer, a vetter or the community itself, states it carried out the described check on the subject's claimed identity, in the exchange taskContext names.",
   "doesNotEstablish": [
     "that the subject's claimed identity is true",
     "that the vetter was eligible to vet, which is a fact about the community and is checked separately",
     "that the check was competent",
-    "that the subject has been admitted to any community; admission is a decision the community records, and this statement is one input to it"
+    "that the subject has been admitted to any community; admission is a decision the community records, and this statement is one input to it",
+    "that the subject has personhood or any other status the community confers; that is the community's decision, recorded on its membership credential, and this statement is evidence for it"
   ],
   "definedIn": null,
   "governedBy": null,

@@ -24,6 +24,6 @@
     "marked": "^18.0.14"
   },
   "devDependencies": {
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.144.0"
   }
 }

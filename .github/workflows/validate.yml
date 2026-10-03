@@ -58,9 +58,15 @@ jobs:
   # A preview deployment per pull request, so a reviewer sees the rendered
   # page of a proposed predicate before merging. Only for branches in this
   # repository: a fork's PR cannot read the secrets and is validated only.
+  # Dependabot PRs are also skipped: a Dependabot-triggered run reads the
+  # Dependabot secrets store, not the Actions store, so the Cloudflare token
+  # is empty there, and a tooling bump does not need a rendered preview.
   preview:
     needs: validate
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -5,15 +5,19 @@ import { createHandler, negotiate } from './_worker.js';
 const NS = '/dtg/vsc';
 const CTX = '/dtg/context';
 
-// A stub of the Pages asset store: a map of paths to bodies, with the one
-// piece of Pages behavior the worker relies on, `<path>` serving `<path>.html`.
+// A stub of the Pages asset store: a map of paths to bodies, with the two
+// pieces of Pages behavior the worker relies on: `<path>` serving
+// `<path>.html`, and an ETag per asset that a matching If-None-Match turns
+// into a bodiless 304.
 function assets(files) {
   return {
     async fetch(req) {
       const p = new URL(req.url).pathname;
       const hit = p === '/' ? files['/index.html'] : files[p] ?? files[`${p}.html`];
       if (hit === undefined) return new Response('not found', { status: 404 });
-      return new Response(hit, { status: 200 });
+      const etag = `"${hit.length}-${hit.charCodeAt(0)}"`;
+      if (req.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers: { etag } });
+      return new Response(hit, { status: 200, headers: { etag } });
     }
   };
 }
@@ -158,6 +162,32 @@ test('unknown paths are honest 404s, never a page', async () => {
 test('only GET and HEAD', async () => {
   const r = await handler.fetch(new Request(`https://registry.example${NS}`, { method: 'POST' }), env);
   assert.equal(r.status, 405);
+});
+
+test('a cache revalidation gets 304 with the same headers as a 200, never an error', async () => {
+  // A browser refresh resends the stylesheet request with If-None-Match. The
+  // asset store answers 304, which must not be mistaken for a redirect.
+  const fresh = await get('/assets/site.css');
+  const etag = fresh.headers.get('etag');
+  assert.ok(etag);
+  let r = await handler.fetch(new Request('https://registry.example/assets/site.css', { headers: { 'if-none-match': etag } }), env);
+  assert.equal(r.status, 304);
+  assert.equal(await r.text(), '');
+  assert.equal(r.headers.get('etag'), etag);
+  assert.equal(r.headers.get('content-type'), 'text/css; charset=utf-8');
+  assert.equal(r.headers.get('cache-control'), 'public, max-age=300');
+  assert.equal(r.headers.get('vary'), 'Accept');
+  assert.equal(r.headers.get('access-control-allow-origin'), '*');
+  // The same through negotiation: the 304 carries the negotiated asset's headers.
+  const ld = await get(`${NS}/witnessed/1`, 'application/ld+json');
+  r = await handler.fetch(new Request(`https://registry.example${NS}/witnessed/1`, { headers: { accept: 'application/ld+json', 'if-none-match': ld.headers.get('etag') } }), env);
+  assert.equal(r.status, 304);
+  assert.equal(r.headers.get('content-type'), 'application/ld+json');
+  assert.equal(r.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  // A stale validator still gets the full asset.
+  r = await handler.fetch(new Request('https://registry.example/assets/site.css', { headers: { 'if-none-match': '"stale"' } }), env);
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), 'body{}');
 });
 
 test('a redirecting asset store is reported, not followed', async () => {

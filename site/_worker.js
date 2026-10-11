@@ -105,13 +105,18 @@ export function createHandler({ namespacePath = '{{namespacePath}}', contextPath
       }
 
       // 3. Fetch. `redirect: 'manual'` so a redirect from the asset store (which
-      // would loop through this worker) surfaces as an error instead.
+      // would loop through this worker) surfaces as an error instead. A 304 is
+      // not a redirect: the request carried If-None-Match or If-Modified-Since
+      // (a browser revalidating its cache, which is what a page refresh does)
+      // and the asset is unchanged. It passes through with the same headers a
+      // 200 would carry, so the cache entry it refreshes stays consistent.
       const assetReq = new Request(url.origin + target, { method: request.method, headers: request.headers, redirect: 'manual' });
       const res = await env.ASSETS.fetch(assetReq);
-      if (res.status >= 300 && res.status < 400) {
+      const notModified = res.status === 304;
+      if (res.status >= 300 && res.status < 400 && !notModified) {
         return new Response(`Asset layout error: ${target} redirected (${res.status}). The build must emit <path>.html, not <path>/index.html.\n`, { status: 500, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
       }
-      if (!res.ok) return res;
+      if (!res.ok && !notModified) return res;
 
       const headers = new Headers(res.headers);
       headers.set('Vary', 'Accept');
@@ -124,7 +129,7 @@ export function createHandler({ namespacePath = '{{namespacePath}}', contextPath
         const seg = path.slice(ns.length + 1).split('/');
         if (seg.length === 2 && NAME.test(seg[0]) && VERSION.test(seg[1])) headers.set('Link', `<${path}/predicate.jsonld>; rel="alternate"; type="application/ld+json"`);
       }
-      return new Response(res.body, { status: res.status, headers });
+      return new Response(notModified ? null : res.body, { status: res.status, headers });
     }
   };
 }

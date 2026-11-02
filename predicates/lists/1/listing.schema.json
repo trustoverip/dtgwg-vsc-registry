@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.trustoverip.org/dtg/vsc/lists/1/listing.schema.json",
+  "title": "lists object.value",
+  "description": "The object of a statement under https://registry.trustoverip.org/dtg/vsc/lists/1: what kind of party the network lists, and the governance framework the listing is made under. Acknowledgement state is deliberately absent: it is derived from the listing's companions (a completed VMC pair, or a repudiates/1 statement), never asserted by the network. The member set is part of this predicate version and is frozen with it once the version leaves draft.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "nodeType",
+    "framework"
+  ],
+  "properties": {
+    "nodeType": {
+      "enum": [
+        "VTC",
+        "VTN"
+      ],
+      "description": "Whether the listed party is a community (its entries are members) or a network (its entries are further listings) — VTI-VTN-031. Values are those of the DTG nodeType vocabulary for these two node types."
+    },
+    "framework": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "iri",
+        "version"
+      ],
+      "description": "The governance framework the listing is made under, and the version relied on (VTI-VTN-002, VTI-VTN-023, VTI-REG-002).",
+      "properties": {
+        "iri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      }
+    }
+  }
+}

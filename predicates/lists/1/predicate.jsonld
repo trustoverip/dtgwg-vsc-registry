@@ -1,0 +1,37 @@
+{
+  "@context": "https://registry.trustoverip.org/dtg/meta/v1/predicate-context.jsonld",
+  "id": "https://registry.trustoverip.org/dtg/vsc/lists/1",
+  "type": "Predicate",
+  "name": "lists",
+  "version": 1,
+  "status": "draft",
+  "label": {
+    "en": "lists"
+  },
+  "definition": {
+    "en": "The issuer, a Verifiable Trust Network, attests that it lists the subject, a community or network, in its published set, under the governance framework the object names."
+  },
+  "classification": "status-assertion",
+  "weighedBy": null,
+  "objectKind": [
+    "value"
+  ],
+  "objectSchema": "https://registry.trustoverip.org/dtg/vsc/lists/1/listing.schema.json",
+  "subjectObjectRelationship": "credentialSubject.id is the DID of the listed community or network, and object.value.nodeType states which it is (VTI-VTN-031). The issuer is the network whose published set the listing belongs to; a listing is never issued by the listed party.",
+  "additionalMembers": {},
+  "taskContextRequired": false,
+  "minimumIssuerScope": "public",
+  "issuer": "The Verifiable Trust Network itself, or its VTA under the network's policy.",
+  "establishes": "That the issuer published the subject in its set, as a community or a network, under the governance framework and version the object names, from validFrom for as long as the listing's status shows it in force.",
+  "doesNotEstablish": [
+    "that the subject is a member of the network: membership is a completed VMC pair between the two, and a listing alone is unacknowledged (VTI-VTN-011, VTI-VTN-013)",
+    "that the subject agreed to be listed",
+    "that the subject is recognised by the network, or by any party that recognises the network: listing is not transitive with recognition (VTI-VTN-022)",
+    "that the subject holds any authority, role or capability in the network or elsewhere (VTI-VTN-020)",
+    "anything about the parties the subject itself lists or admits"
+  ],
+  "definedIn": "https://trustoverip.github.io/dtgwg-vti-spec/",
+  "governedBy": null,
+  "supersedes": null,
+  "supersededBy": null
+}

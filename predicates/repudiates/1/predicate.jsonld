@@ -1,0 +1,35 @@
+{
+  "@context": "https://registry.trustoverip.org/dtg/meta/v1/predicate-context.jsonld",
+  "id": "https://registry.trustoverip.org/dtg/vsc/repudiates/1",
+  "type": "Predicate",
+  "name": "repudiates",
+  "version": 1,
+  "status": "draft",
+  "label": {
+    "en": "repudiates"
+  },
+  "definition": {
+    "en": "The issuer, the party a credential is about, states that it does not accept the credential the object names, which another party issued about it."
+  },
+  "classification": "status-assertion",
+  "weighedBy": null,
+  "objectKind": [
+    "digestMultibase"
+  ],
+  "subjectObjectRelationship": "credentialSubject.id MUST be the issuer of the credential object.digestMultibase names, and the statement's issuer MUST be that credential's credentialSubject.id; a verifier holding the repudiated credential MUST check both. Only the party a statement is about can repudiate it, and the repudiation is addressed to the party that made it.",
+  "additionalMembers": {},
+  "taskContextRequired": false,
+  "minimumIssuerScope": "directed",
+  "issuer": "The party the repudiated credential names as its subject, under the identifier it names.",
+  "establishes": "That the party the referenced credential is about stated, from validFrom, that it does not accept that credential.",
+  "doesNotEstablish": [
+    "that the repudiated credential is revoked, expired or otherwise invalid: its issuer's status for it is unchanged, and a verifier checks it separately",
+    "that the repudiated credential's claims are false",
+    "anything about the standing, authority or conduct of the repudiated credential's issuer",
+    "that the repudiation was received or published by the repudiated credential's issuer"
+  ],
+  "definedIn": null,
+  "governedBy": null,
+  "supersedes": null,
+  "supersededBy": null
+}

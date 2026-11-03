@@ -1,0 +1,30 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "id": "urn:uuid:9a2e4c71-0d3b-4f6a-8c15-7e9b2d4f6a13",
+  "type": [
+    "VerifiableCredential",
+    "DTGCredential",
+    "StatementCredential"
+  ],
+  "issuer": "did:webvh:QmAu2Td9hRkPqLu4WgXyN3c8pT2rJ6mK9sB1dF4gH7jL:health-au.example",
+  "issuerScope": "public",
+  "validFrom": "2026-11-03T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:webvh:QmWhn7yRkPqLu4WgXyN3c8pT2rJ6mK9sB1dF4gH7jL0n:whn.example",
+    "predicate": "https://registry.trustoverip.org/dtg/vsc/repudiates/1",
+    "object": {
+      "digestMultibase": "zQmdfTbBqBPQ7VNxZEYEj14VmRuZBkqFbiwReogJgS1zR1n"
+    }
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-jcs-2022",
+    "created": "2026-11-03T09:00:00Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:webvh:QmAu2Td9hRkPqLu4WgXyN3c8pT2rJ6mK9sB1dF4gH7jL:health-au.example#key-0",
+    "proofValue": "z3FXQjecWJKT…illustrative…"
+  }
+}

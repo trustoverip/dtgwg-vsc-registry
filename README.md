@@ -33,11 +33,14 @@ https://registry.trustoverip.org/dtg/vsc/witnessed/1
 
 `https`, no `www.`, no trailing slash, no fragment. `<n>` is a per-predicate integer version; each `<name>/<n>` is its own immutable term, and there is no compatibility between versions (see [`GOVERNANCE.md` §3](GOVERNANCE.md#3-versioning)). The bare `.../vsc/<name>` is a documentation page, never a predicate.
 
-The credential `@context` the specification requires is published beside the vocabulary, versioned and frozen:
+The credential `@context` the specification requires is published beside the vocabulary, one frozen document per version:
 
 ```
 https://registry.trustoverip.org/dtg/context/v1
+https://registry.trustoverip.org/dtg/context/v2
 ```
+
+`v2` is `v1` with one term added, `purposes`: a VAC that states the purposes its subject may use what it obtains for lists `v2`, and a credential that carries nothing `v2` added may keep listing `v1`. The specification's *Context Versions* section says which version a credential requires and pins each one's digest.
 
 ## How the registry is served
 

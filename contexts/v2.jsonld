@@ -98,7 +98,7 @@
         "@protected": true,
         "scope": "https://registry.trustoverip.org/dtg/credentials#purposeScope",
         "purposes": {
-          "@id": "https://registry.trustoverip.org/dtg/credentials#purpose",
+          "@id": "https://registry.trustoverip.org/dtg/credentials#listedPurposes",
           "@container": "@set"
         }
       }

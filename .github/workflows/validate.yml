@@ -43,7 +43,7 @@ jobs:
       - name: No instance-specific value outside registry.config.json
         run: npm run check:instance
 
-      - name: Unit tests (validator fixtures, worker routing)
+      - name: Unit tests (validator fixtures, context expansion, worker routing)
         run: npm test
 
       - name: Build

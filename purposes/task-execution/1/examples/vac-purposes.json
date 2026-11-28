@@ -1,0 +1,25 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v2"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "AuthorityCredential"],
+  "issuer": "did:key:z6MkpTHR8VNs",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "validUntil": "2026-01-06T14:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkfR2aQ9Xv",
+    "authority": {
+      "scope": "did:webvh:z6Mkw:example.com:rooms:7f3a",
+      "actions": ["read"],
+      "parent": "zQmTmZDsQv1koUkjQe4BRskbks9dEt9wJ9sJmkrfREz5BQA",
+      "maxAttenuation": 0
+    },
+    "purposes": {
+      "scope": "listed",
+      "purposes": ["https://registry.trustoverip.org/dtg/purpose/task-execution/1"]
+    }
+  },
+  "proof": { "//": "..." }
+}

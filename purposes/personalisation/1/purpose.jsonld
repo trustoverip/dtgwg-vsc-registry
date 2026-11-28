@@ -1,0 +1,54 @@
+{
+  "@context": "https://registry.trustoverip.org/dtg/meta/v1/purpose-context.jsonld",
+  "id": "https://registry.trustoverip.org/dtg/purpose/personalisation/1",
+  "type": "Purpose",
+  "name": "personalisation",
+  "version": 1,
+  "status": "draft",
+  "label": {
+    "en": "personalisation"
+  },
+  "description": {
+    "en": "To tailor how it works for you, such as your preferences and tone, and to remember context between sessions."
+  },
+  "definition": {
+    "en": "The recipient uses the data to adapt what it does for the principal to the principal: the tone it takes, the preferences it applies, and the context it carries from one session to the next."
+  },
+  "includes": [
+    "applying the principal's preferences, stated or inferred, such as language, units, tone or accessibility needs, to what the recipient does for the principal",
+    "carrying context from an earlier session into a later one, so that the principal need not repeat it",
+    "ordering or choosing among the options the recipient presents to the principal by what it knows of the principal"
+  ],
+  "excludes": [
+    "acting on the data in a task, such as passing it to a third party, which is task execution",
+    "adapting what the recipient does for anyone other than the principal the data is about, or for principals in aggregate",
+    "deriving aggregate measures or statistics, about the principal or across principals, which is analytics",
+    "training, fine-tuning or evaluating a machine-learning model on the data, a model kept for the principal alone included, which is model training",
+    "advertising or marketing selected for the principal"
+  ],
+  "examples": [
+    "An assistant reads that the principal prefers metric units and answers in them.",
+    "An agent recalls, at the start of a new session, the project the principal was working on in the last one."
+  ],
+  "mappings": [
+    {
+      "term": "personalisation",
+      "scheme": "https://trustoverip.github.io/dtgwg-vti-spec/#appendix-h-purpose-registry",
+      "relation": "exactMatch",
+      "note": "The purpose VTI Appendix H registers under that name; this IRI is its absolute form. VTI-ACL-109 compares purposes as exact strings, so until Appendix H names this IRI as the purpose's canonical identifier, a system that accepts both maps one to the other in its configuration."
+    },
+    {
+      "term": "https://w3id.org/dpv#ServicePersonalisation",
+      "scheme": "https://w3id.org/dpv",
+      "relation": "closeMatch",
+      "note": "Close, not exact: the Data Privacy Vocabulary's personalisation purposes also cover personalised advertising, which this purpose excludes."
+    }
+  ],
+  "definedIn": null,
+  "governedBy": null,
+  "supersedes": null,
+  "supersededBy": null,
+  "seeAlso": [
+    "https://github.com/loyalagents/hcp-spec/blob/b790561/spec/2.0-draft-3/specification.md#6152-purposes"
+  ]
+}

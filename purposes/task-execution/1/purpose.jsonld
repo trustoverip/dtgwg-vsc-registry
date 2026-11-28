@@ -1,0 +1,54 @@
+{
+  "@context": "https://registry.trustoverip.org/dtg/meta/v1/purpose-context.jsonld",
+  "id": "https://registry.trustoverip.org/dtg/purpose/task-execution/1",
+  "type": "Purpose",
+  "name": "task-execution",
+  "version": 1,
+  "status": "draft",
+  "label": {
+    "en": "task execution"
+  },
+  "description": {
+    "en": "To carry out a task you asked for, and nothing beyond that task."
+  },
+  "definition": {
+    "en": "The recipient uses the data to carry out a task the principal asked of it: to take the requested action, answer the question, or produce the result asked for, and for nothing that task does not need."
+  },
+  "includes": [
+    "reading the data a step of the requested task needs, such as a delivery address to complete an order the principal asked the recipient to place",
+    "telling a third party what the requested task needs from the data, where the grant allows onward sharing, for that task only",
+    "holding intermediate results while the task is under way, so that a task of several steps can complete"
+  ],
+  "excludes": [
+    "a task the principal did not ask for, including one the recipient infers would be helpful",
+    "adapting what the recipient does to the principal beyond the task at hand, or carrying context into later sessions, which is personalisation",
+    "deriving aggregate measures or statistics, about the principal or across principals, which is analytics",
+    "training, fine-tuning or evaluating a machine-learning model, which is model training",
+    "advertising, marketing or profiling the principal"
+  ],
+  "examples": [
+    "An agent asked to book a table reads the principal's dietary requirements and passes them to the restaurant with the booking.",
+    "An agent asked to submit an expense claim reads the receipts the principal stored and fills in the claim form."
+  ],
+  "mappings": [
+    {
+      "term": "taskExecution",
+      "scheme": "https://trustoverip.github.io/dtgwg-vti-spec/#appendix-h-purpose-registry",
+      "relation": "exactMatch",
+      "note": "The purpose VTI Appendix H registers under that name; this IRI is its absolute form. VTI-ACL-109 compares purposes as exact strings, so until Appendix H names this IRI as the purpose's canonical identifier, a system that accepts both maps one to the other in its configuration."
+    },
+    {
+      "term": "https://w3id.org/dpv#ServiceProvision",
+      "scheme": "https://w3id.org/dpv",
+      "relation": "broadMatch",
+      "note": "The Data Privacy Vocabulary's purpose of providing a service is broader: it is not limited to a task the principal asked for."
+    }
+  ],
+  "definedIn": null,
+  "governedBy": null,
+  "supersedes": null,
+  "supersededBy": null,
+  "seeAlso": [
+    "https://github.com/loyalagents/hcp-spec/blob/b790561/spec/2.0-draft-3/specification.md#6152-purposes"
+  ]
+}

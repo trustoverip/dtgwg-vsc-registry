@@ -48,7 +48,7 @@ Predicate versions are bare integers (`/witnessed/1`). Context versions carry a 
 
 ### 2.5 Reserved paths
 
-`/dtg/context/`, `/dtg/credentials` and `/dtg/meta/` are not vocabularies of predicates and no predicate name is minted under them. `/dtg/context/vN` is a credential context (§3.1) and `/dtg/credentials#` is the unversioned namespace of the type and property IRIs those contexts define. A new vocabulary under `/dtg/` (for example VDC `scope` terms or VAC `actions`) gets its own sibling of `vsc/` and its own definition format.
+`/dtg/context/`, `/dtg/credentials` and `/dtg/meta/` are not vocabularies of predicates and no predicate name is minted under them. `/dtg/context/vN` is a credential context (§3.1) and `/dtg/credentials#` is the unversioned namespace of the type and property IRIs those contexts define. A new vocabulary under `/dtg/` (for example VDC `scope` terms or VAC `actions`) gets its own sibling of `vsc/` and its own definition format. `/dtg/purpose/` is the first such sibling: the purpose vocabulary of §10 (proposed).
 
 ## 3. Versioning
 
@@ -139,3 +139,22 @@ Every push to `main` publishes the current state. The registry is not tagged and
 ## 9. Changing this document
 
 This document is registry content: two editor approvals, as in §6. Changes to §2.1 (the IRI form) or §3 (versioning) after the first non-`draft` term exists are breaking for every issued credential and are not expected to be made.
+
+## 10. Purposes (proposed)
+
+> **Proposed.** This section arrives with the purpose vocabulary and its first two entries, `task-execution/1` and `personalisation/1`, both `draft`. It takes effect as §9 provides, with two editor approvals.
+
+A **purpose** names what a party may use data it obtains for. A purpose IRI is what a Human Context Protocol grant carries as a purpose `code` (HCP 2.0 §6.1.5.2), and what a VTI access-control entry or a DTG authority credential lists in `purposes` (VTI-ACL-109; *Purposes of Use* in the DTG Credentials Core Specification). The purpose vocabulary lives under `https://registry.trustoverip.org/dtg/purpose/`, in `purposes/<name>/<n>/`, and its definition format is `meta/purpose.schema.json`.
+
+The rules for predicates apply to purposes, read with "purpose" for "predicate" and the purpose namespace for `/dtg/vsc/`: the identifier form and the bare name (§2.1, §2.2), versioning (§3), statuses and their transitions, the in-place rule and the hosting gate (§4), review (§6), equivalence (§7, where the informative relation is the definition's `mappings` member as well as `seeAlso`) and pinning (§8, where the list is `purposes.json`). The build and the immutability check enforce them for both. What differs is admission and naming.
+
+**Admission.** A proposed purpose is accepted when it:
+
+1. is complete against `meta/purpose.schema.json`, including what the purpose covers and what it does not;
+2. names a **use** of data, not a kind of data (that is a category), a party, an action, or a duration (that is the grant's);
+3. has a `description` a person can read and decide on before approving it;
+4. has **no existing purpose with the same meaning** in this namespace, and claims `exactMatch` to no term another live purpose here already claims: one identifier per concept;
+5. has an NFC IRI in the form of §2.1 and at least an English label;
+6. is either needed by a DTG or VTI specification, or in use, or credibly about to be, by more than one community.
+
+**Naming.** A purpose name is a noun phrase naming the activity, not a verb form: `task-execution`, `personalisation`. Where the purpose is the absolute form of a name another specification registers, the name follows that name's words and spelling, hyphenated, so that one is recognisable from the other.

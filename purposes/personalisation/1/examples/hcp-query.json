@@ -1,0 +1,8 @@
+{
+  "//": "An HCP query (HCP 2.0-draft-3 §5.2.1) declaring this purpose. It succeeds only under a grant whose detail for `general_preferences` approved the same code, byte-exact.",
+  "query": "How does the person prefer answers to be formatted?",
+  "categories": ["general_preferences"],
+  "purpose": "https://registry.trustoverip.org/dtg/purpose/personalisation/1",
+  "purposeDescription": "Formatting replies the way the person prefers.",
+  "maxEntries": 3
+}

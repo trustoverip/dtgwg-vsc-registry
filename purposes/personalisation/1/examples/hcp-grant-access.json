@@ -1,0 +1,12 @@
+{
+  "//": "One authorization detail of an HCP grant's `access` (HCP 2.0-draft-3 §6.1.5): the purpose code is this IRI, and the description is the one the registry gives for it. The `type` is HCP's placeholder.",
+  "type": "https://hcp.example/spec/authorization/context-access",
+  "actions": ["read"],
+  "categories": ["general_preferences"],
+  "purposes": [
+    {
+      "code": "https://registry.trustoverip.org/dtg/purpose/personalisation/1",
+      "description": "To tailor how it works for you, such as your preferences and tone, and to remember context between sessions."
+    }
+  ]
+}

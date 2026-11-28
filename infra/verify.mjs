@@ -144,6 +144,33 @@ if (terms.length === 0) {
   await check(`${namePath} + ld+json → 406`, () => get(namePath, 'application/ld+json'), { status: 406 });
 }
 
+// The purpose vocabulary, where the registry publishes one: the same table at its own path.
+const pp = config.purposeNamespacePath;
+if (pp) {
+  await check(`${pp} → HTML`, () => get(pp), { status: 200, typeStart: 'text/html', header: { vary: 'Accept' } });
+  await check(`${pp} + ld+json → vocab`, () => get(pp, 'application/ld+json'), { status: 200, typeStart: 'application/ld+json', bodyIncludes: '"@graph"' });
+  const purposeList = await check(`${pp} + json → purpose list`, () => get(pp, 'application/json'), { status: 200, typeStart: 'application/json', bodyIncludes: '"purposes"' });
+  await check(`${pp}/does-not-exist/1 + ld+json is 404`, () => get(`${pp}/does-not-exist/1`, 'application/ld+json'), { status: 404 });
+  await check(`${config.metaPath}/${config.metaVersion}/purpose.schema.json`, () => get(`${config.metaPath}/${config.metaVersion}/purpose.schema.json`), { status: 200, typeStart: 'application/json', bodyIncludes: '"$id"' });
+  let purposes = [];
+  try {
+    purposes = Object.keys(JSON.parse(purposeList?.text ?? '').purposes ?? {});
+  } catch {
+    bad('purpose list is not JSON');
+  }
+  if (purposes.length === 0) {
+    console.log('  - no published purposes; purpose checks skipped');
+  } else {
+    const iri = purposes[0];
+    const termPath = new URL(iri).pathname;
+    const namePath = termPath.replace(/\/[0-9]+$/, '');
+    await check(`${termPath} → HTML`, () => get(termPath), { status: 200, typeStart: 'text/html', bodyIncludes: iri, header: { 'cache-control': 'public, max-age=31536000, immutable' } });
+    await check(`${termPath} + ld+json → definition`, () => get(termPath, 'application/ld+json'), { status: 200, typeStart: 'application/ld+json', bodyIncludes: `"id": "${iri}"` });
+    await check(`${termPath} + json → 406`, () => get(termPath, 'application/json'), { status: 406 });
+    await check(`${namePath} + ld+json → 406`, () => get(namePath, 'application/ld+json'), { status: 406 });
+  }
+}
+
 const release = await check('release.json', () => get('/release.json'), { status: 200, typeStart: 'application/json', bodyIncludes: '"files"' });
 if (expectCommit) {
   try {

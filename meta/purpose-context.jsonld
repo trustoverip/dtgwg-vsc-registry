@@ -1,0 +1,34 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "@protected": true,
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "reg": "{{metaBase}}v1/vocab#",
+
+    "id": "@id",
+    "type": "@type",
+    "Purpose": "reg:Purpose",
+
+    "name": "reg:name",
+    "version": { "@id": "reg:version", "@type": "xsd:integer" },
+    "status": "reg:status",
+    "since": { "@id": "reg:since", "@type": "xsd:date" },
+    "deprecatedOn": { "@id": "reg:deprecatedOn", "@type": "xsd:date" },
+    "label": { "@id": "rdfs:label", "@container": "@language" },
+    "description": { "@id": "dcterms:description", "@container": "@language" },
+    "definition": { "@id": "skos:definition", "@container": "@language" },
+    "includes": { "@id": "reg:includes", "@container": "@list" },
+    "excludes": { "@id": "reg:excludes", "@container": "@list" },
+    "examples": { "@id": "skos:example", "@container": "@list" },
+    "mappings": { "@id": "reg:mappings", "@type": "@json" },
+    "definedIn": { "@id": "rdfs:isDefinedBy", "@type": "@id" },
+    "governedBy": { "@id": "reg:governedBy", "@type": "@id" },
+    "supersedes": { "@id": "dcterms:replaces", "@type": "@id" },
+    "supersededBy": { "@id": "dcterms:isReplacedBy", "@type": "@id" },
+    "convergenceRecord": { "@id": "reg:convergenceRecord", "@type": "@id" },
+    "seeAlso": { "@id": "rdfs:seeAlso", "@type": "@id", "@container": "@set" }
+  }
+}

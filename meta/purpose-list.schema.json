@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "{{metaBase}}v1/purpose-list.schema.json",
+  "title": "DTG purpose list",
+  "description": "The machine-readable list of every published purpose version, keyed by IRI, that an authorization service or a verifier imports at configuration time: the codes it accepts, and the description it shows a person for each. Every status is listed; the importer decides its own acceptance floor.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "namespace", "commit", "generatedAt", "purposes"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri" },
+    "namespace": { "type": "string", "format": "uri" },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$",
+      "description": "The registry commit this list was built from. An importer pins this commit, or the digest of the list it fetched."
+    },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "purposes": {
+      "type": "object",
+      "propertyNames": { "format": "uri" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "label", "description", "supersededBy"],
+        "properties": {
+          "status": { "enum": ["draft", "candidate", "standard", "deprecated"] },
+          "label": { "$ref": "#/$defs/languageMap" },
+          "description": { "$ref": "#/$defs/languageMap" },
+          "supersededBy": { "type": ["string", "null"], "format": "uri" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "languageMap": {
+      "type": "object",
+      "required": ["en"],
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    }
+  }
+}

@@ -4,6 +4,7 @@ import { createHandler, negotiate } from './_worker.js';
 
 const NS = '/dtg/vsc';
 const CTX = '/dtg/context';
+const PUR = '/dtg/purpose';
 
 // A stub of the Pages asset store: a map of paths to bodies, with the two
 // pieces of Pages behavior the worker relies on: `<path>` serving
@@ -32,13 +33,20 @@ const FILES = {
   '/dtg/vsc/witnessed/1.html': '<witnessed/1>',
   '/dtg/vsc/witnessed/1/predicate.jsonld': '{"id":"witnessed/1"}',
   '/dtg/vsc/witnessed/1/witness-context.schema.json': '{}',
+  '/dtg/purpose.html': '<purposes>',
+  '/dtg/purpose/vocab.jsonld': '{"@graph":["purposes"]}',
+  '/dtg/purpose/purposes.json': '{"purposes":{}}',
+  '/dtg/purpose/task-execution.html': '<purpose history>',
+  '/dtg/purpose/task-execution/1.html': '<task-execution/1>',
+  '/dtg/purpose/task-execution/1/purpose.jsonld': '{"id":"task-execution/1"}',
+  '/dtg/purpose/task-execution/1/examples/hcp-grant-access.json': '{}',
   '/dtg/context.html': '<contexts>',
   '/dtg/context/v1.html': '<context v1>',
   '/dtg/context/v1.jsonld': '{"@context":{}}',
   '/assets/site.css': 'body{}'
 };
 
-const handler = createHandler({ namespacePath: NS, contextPath: CTX });
+const handler = createHandler({ namespacePath: NS, purposeNamespacePath: PUR, contextPath: CTX });
 const env = { ASSETS: assets(FILES) };
 const get = (path, accept) => handler.fetch(new Request(`https://registry.example${path}`, { headers: accept ? { accept } : {} }), env);
 
@@ -194,4 +202,61 @@ test('a redirecting asset store is reported, not followed', async () => {
   const loopy = { ASSETS: { async fetch() { return new Response(null, { status: 308, headers: { location: '/x/' } }); } } };
   const r = await handler.fetch(new Request(`https://registry.example${NS}/witnessed/1`), loopy);
   assert.equal(r.status, 500);
+});
+
+test('purpose namespace URL: html, vocab, purpose list', async () => {
+  let r = await get(PUR);
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), '<purposes>');
+  assert.match(r.headers.get('content-type'), /^text\/html/);
+  assert.equal(r.headers.get('vary'), 'Accept');
+  r = await get(PUR, 'application/ld+json');
+  assert.equal(await r.text(), '{"@graph":["purposes"]}');
+  assert.equal(r.headers.get('content-type'), 'application/ld+json');
+  r = await get(PUR, 'application/json');
+  assert.equal(await r.text(), '{"purposes":{}}');
+  assert.equal(r.headers.get('content-type'), 'application/json');
+  assert.equal(r.headers.get('cache-control'), 'public, max-age=300');
+});
+
+test('bare purpose name: html only, 406 for machines', async () => {
+  let r = await get(`${PUR}/task-execution`);
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), '<purpose history>');
+  r = await get(`${PUR}/task-execution`, 'application/ld+json');
+  assert.equal(r.status, 406);
+  assert.match(await r.text(), /is not a purpose; a purpose IRI carries a version/);
+  r = await get(`${PUR}/task-execution`, 'application/json');
+  assert.equal(r.status, 406);
+});
+
+test('purpose IRI: html page, definition under ld+json, 406 for plain json', async () => {
+  let r = await get(`${PUR}/task-execution/1`);
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), '<task-execution/1>');
+  assert.equal(r.headers.get('link'), `<${PUR}/task-execution/1/purpose.jsonld>; rel="alternate"; type="application/ld+json"`);
+  assert.equal(r.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  r = await get(`${PUR}/task-execution/1`, 'application/ld+json');
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), '{"id":"task-execution/1"}');
+  assert.equal(r.headers.get('content-type'), 'application/ld+json');
+  r = await get(`${PUR}/task-execution/1`, 'application/json');
+  assert.equal(r.status, 406);
+  assert.match(await r.text(), /A purpose definition is JSON-LD/);
+  r = await get(`${PUR}/task-execution/1/examples/hcp-grant-access.json`);
+  assert.equal(r.headers.get('content-type'), 'application/json');
+  assert.equal(r.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  r = await get(`${PUR}/task-execution/1/`);
+  assert.equal(r.status, 301);
+  assert.equal(r.headers.get('location'), `https://registry.example${PUR}/task-execution/1`);
+  assert.equal((await get(`${PUR}/does-not-exist/1`, 'application/ld+json')).status, 404);
+});
+
+test('a handler with no purpose namespace negotiates nothing under it', async () => {
+  const bare = createHandler({ namespacePath: NS, purposeNamespacePath: '', contextPath: CTX });
+  const r = await bare.fetch(new Request(`https://registry.example${PUR}/task-execution`, { headers: { accept: 'application/ld+json' } }), env);
+  assert.equal(r.status, 200); // a plain page, not a 406: the path is not a vocabulary here
+  assert.equal(r.headers.get('link'), null);
+  const p = await bare.fetch(new Request(`https://registry.example${NS}/witnessed/1`, { headers: { accept: 'application/ld+json' } }), env);
+  assert.equal(await p.text(), '{"id":"witnessed/1"}');
 });

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "{{metaBase}}v1/purpose.schema.json",
+  "title": "DTG purpose definition",
+  "description": "The definition of one version of one purpose of use: a code naming what a party may use data it obtains for. A purpose IRI is what a Human Context Protocol grant carries as a purpose `code` (HCP 2.0 §6.1.5.2), what a VTI access-control entry or a DTG VAC lists in `purposes` (VTI-ACL-109; DTG Credentials Core, Purposes of Use), and what a request names when it declares its purpose. It is compared byte-exact, never resolved at use. The members state what using data for the purpose covers and what it does not, the description a person is shown before approving it, and how it relates to purpose names defined elsewhere. Tokens in braces are replaced with the registry's own values when this schema is published.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "@context", "id", "type", "name", "version", "status",
+    "label", "description", "definition", "includes", "excludes", "examples",
+    "mappings", "definedIn", "governedBy", "supersedes", "supersededBy"
+  ],
+  "properties": {
+    "@context": {
+      "const": "{{metaBase}}v1/purpose-context.jsonld"
+    },
+    "id": {
+      "type": "string",
+      "format": "uri",
+      "description": "The purpose IRI: <purposeNamespace><name>/<version>, in NFC, no trailing slash. The registry build checks it against the folder path and the configured purpose namespace. This exact string is the HCP purpose `code` and the value listed in VTI or VAC `purposes`."
+    },
+    "type": { "const": "Purpose" },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["draft", "candidate", "standard", "deprecated"] },
+    "since": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the release that made this version non-draft. Required from candidate onward."
+    },
+    "deprecatedOn": { "type": "string", "format": "date" },
+    "label": {
+      "$ref": "#/$defs/languageMap",
+      "description": "A short human name for the purpose."
+    },
+    "description": {
+      "$ref": "#/$defs/languageMap",
+      "description": "One plain-language sentence a person is shown before approving a grant for this purpose: the `description` HCP 2.0 §6.1.5.2 pairs with each purpose code. An authorization service MAY show this text in place of a client-supplied description for the same code."
+    },
+    "definition": {
+      "$ref": "#/$defs/languageMap",
+      "description": "What using data for this purpose means: the normative statement of the use a party declares when it names this purpose."
+    },
+    "includes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Uses this purpose covers, each stated so a reviewer can decide whether a given use falls under it."
+    },
+    "excludes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Uses this purpose explicitly does not cover, typically because another purpose names them. A grant for this purpose is not a grant for any of these."
+    },
+    "examples": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Concrete, informative examples of a use declared under this purpose. Example documents that carry the IRI (an HCP authorization detail, a VAC) go in the version folder's examples/ directory."
+    },
+    "mappings": {
+      "type": "array",
+      "description": "Informative relations to purpose names and codes defined elsewhere: a VTI Appendix H name, a Data Privacy Vocabulary purpose, a Personal Data Portability Protocol code. SKOS mapping relations, read from this purpose to the other term. Like seeAlso, they are for the people configuring a system; a verifier never treats a mapped term as equal to this IRI on the strength of a mapping (VTI-ACL-109 compares purposes as exact strings), and a system that accepts both maps one to the other in its own configuration.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["term", "scheme", "relation"],
+        "properties": {
+          "term": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The other term exactly as it is written where it is defined: a registered name such as `taskExecution`, or an absolute IRI."
+          },
+          "scheme": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where the term is defined."
+          },
+          "relation": {
+            "enum": ["exactMatch", "closeMatch", "broadMatch", "narrowMatch", "relatedMatch"],
+            "description": "The SKOS mapping relation from this purpose to the term: broadMatch means the term is broader than this purpose."
+          },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "definedIn": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "Where the purpose's normative text lives, if outside this registry."
+    },
+    "governedBy": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "Null for this registry's own vocabulary. For a community purpose, the governance framework that defines it."
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "The predecessor version, or a community purpose this one is the convergence successor of."
+    },
+    "supersededBy": {
+      "type": ["string", "null"],
+      "format": "uri"
+    },
+    "convergenceRecord": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "description": "Required when 'supersedes' names an IRI outside this namespace: the commit or pull request in the community's repository that marks its purpose superseded by this one."
+    },
+    "seeAlso": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "description": "Informative pointers. Verifiers never follow these."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "deprecated" } } },
+      "then": { "required": ["deprecatedOn", "since"] }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["candidate", "standard"] } } },
+      "then": { "required": ["since"] }
+    }
+  ],
+  "$defs": {
+    "languageMap": {
+      "type": "object",
+      "description": "Language-tagged strings. English is required; add every language the defining community uses.",
+      "required": ["en"],
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    }
+  }
+}

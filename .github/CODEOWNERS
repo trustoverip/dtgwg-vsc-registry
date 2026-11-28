@@ -1,6 +1,6 @@
 # Code ownership
 #
-# Registry content (the predicates, the frozen contexts, the definition format
+# Registry content (the predicates, the purposes, the frozen contexts, the definition format
 # and the rules) is owned by the five editors of the DTG Credentials Core
 # Specification, because the registry holds content that moves out of that
 # specification and is governed by its rules (PLAN.md, decision 6). Branch
@@ -14,6 +14,7 @@
 
 # Registry content: two editor approvals
 /predicates/                       @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
+/purposes/                         @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
 /contexts/                         @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
 /meta/                             @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78
 /GOVERNANCE.md                     @martipos @albertoleon7794 @bmiller59 @talltree @geoffturk @stormer78

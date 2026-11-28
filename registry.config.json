@@ -1,6 +1,7 @@
 {
-  "$comment": "The one place this registry instance is named. Every IRI prefix, host name, site label and host-level heading the build, the meta-schema, the templates and the worker use comes from here. To run your own registry, change these values and the `name` in wrangler.toml; nothing else in the repository carries an instance-specific value (CI fails if one appears). See README.md, 'Running your own registry'.",
+  "$comment": "The one place this registry instance is named. Every IRI prefix (the predicate namespace, the purpose namespace, the context and meta bases), host name, site label and host-level heading the build, the meta-schema, the templates and the worker use comes from here. To run your own registry, change these values and the `name` in wrangler.toml; nothing else in the repository carries an instance-specific value (CI fails if one appears). See README.md, 'Running your own registry'.",
   "namespace": "https://registry.trustoverip.org/dtg/vsc/",
+  "purposeNamespace": "https://registry.trustoverip.org/dtg/purpose/",
   "contextBase": "https://registry.trustoverip.org/dtg/context/",
   "metaBase": "https://registry.trustoverip.org/dtg/meta/",
   "siteUrl": "https://registry.trustoverip.org/",

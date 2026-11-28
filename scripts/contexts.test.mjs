@@ -14,7 +14,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import jsonld from 'jsonld';
-import { loadConfig } from './lib/config.mjs';
+import { loadConfig, substitute } from './lib/config.mjs';
+import { loadRegistry, buildPurposeVocab } from './lib/registry.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const config = loadConfig(path.join(ROOT, 'registry.config.json'));
@@ -37,7 +38,12 @@ const LOCAL = new Map([
   [ctxUrl('v2'), ctxFile('v2')],
 ]);
 
+// The purpose definitions' context is a meta file carrying {{tokens}}; it is
+// loaded as the build publishes it, with the tokens filled from the config.
+const PURPOSE_CONTEXT = JSON.parse(substitute(fs.readFileSync(path.join(ROOT, 'meta', 'purpose-context.jsonld'), 'utf8'), config));
+
 async function documentLoader(url) {
+  if (url === config.purposeContextUrl) return { contextUrl: null, documentUrl: url, document: PURPOSE_CONTEXT };
   const file = LOCAL.get(url);
   if (!file) throw new Error(`no local copy of ${url}; these tests never fetch`);
   return { contextUrl: null, documentUrl: url, document: JSON.parse(fs.readFileSync(file, 'utf8')) };
@@ -128,4 +134,44 @@ test('a later context cannot redefine purposes or its members', async () => {
   const isProtected = (e) => e.details?.code === 'protected term redefinition';
   await assert.rejects(redefine({ purposes: 'https://attacker.example/purposes' }), isProtected);
   await assert.rejects(redefine({ purposes: { '@id': `${CRED}purposes`, '@context': { scope: 'https://attacker.example/scope' } } }), isProtected);
+});
+
+// ---------------------------------------------------------------------------
+// The purpose vocabulary (purposes/): its IRIs as VAC purposes, and its
+// definitions under the purpose context.
+// ---------------------------------------------------------------------------
+
+const registry = loadRegistry({ root: ROOT });
+
+test('a registry purpose IRI listed in a VAC stays a plain string under v2', async () => {
+  assert.ok(registry.purposes.length > 0, 'no purposes in the registry');
+  const iris = registry.purposes.map((p) => p.iri);
+  const p = purposesOf(await expand(vac({ purposes: { scope: 'listed', purposes: iris } })));
+  assert.deepEqual(p[`${CRED}listedPurposes`], iris.map((iri) => ({ '@value': iri })));
+});
+
+test('every example VAC under purposes/ expands under the context it lists', async () => {
+  let n = 0;
+  for (const p of registry.purposes) {
+    for (const ex of p.examples) {
+      if (!Array.isArray(ex.doc['@context'])) continue;
+      const { proof: _omit, ...doc } = ex.doc;
+      const out = await expand(doc);
+      assert.ok(purposesOf(out)[`${CRED}listedPurposes`].some((v) => v['@value'] === p.iri), `${p.relDir}/examples/${ex.file}`);
+      n++;
+    }
+  }
+  assert.ok(n > 0, 'no example VAC to expand');
+});
+
+test('the purpose vocabulary expands under the purpose context with no member dropped', async () => {
+  const out = await jsonld.expand(buildPurposeVocab(registry), { documentLoader, safe: true });
+  assert.equal(out.length, registry.purposes.length);
+  const reg = `${config.metaBase}v1/vocab#`;
+  for (const node of out) {
+    assert.deepEqual(node['@type'], [`${reg}Purpose`]);
+    for (const k of ['http://www.w3.org/2000/01/rdf-schema#label', 'http://purl.org/dc/terms/description', 'http://www.w3.org/2004/02/skos/core#definition', `${reg}includes`, `${reg}excludes`, 'http://www.w3.org/2004/02/skos/core#example', `${reg}mappings`]) {
+      assert.ok(node[k], `${node['@id']} lacks ${k}`);
+    }
+  }
 });

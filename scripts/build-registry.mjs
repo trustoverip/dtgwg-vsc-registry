@@ -32,15 +32,16 @@ try {
 
 const errors = validateRegistry(reg);
 const n = reg.predicates.length;
+const np = reg.purposes.length;
 if (errors.length) {
-  console.error(`\n${errors.length} problem${errors.length === 1 ? '' : 's'} in ${n} predicate version${n === 1 ? '' : 's'}:\n`);
+  console.error(`\n${errors.length} problem${errors.length === 1 ? '' : 's'} in ${n} predicate version${n === 1 ? '' : 's'} and ${np} purpose version${np === 1 ? '' : 's'}:\n`);
   for (const e of errors) console.error(`  ✗ ${e}`);
   console.error('');
   process.exit(1);
 }
-console.log(`✓ ${n} predicate version${n === 1 ? '' : 's'}, ${reg.contexts.length} context${reg.contexts.length === 1 ? '' : 's'} valid (${reg.config.namespace})`);
+console.log(`✓ ${n} predicate version${n === 1 ? '' : 's'}, ${np} purpose version${np === 1 ? '' : 's'}, ${reg.contexts.length} context${reg.contexts.length === 1 ? '' : 's'} valid (${[reg.config.namespace, reg.config.purposeNamespace].filter(Boolean).join(', ')})`);
 
 if (!validateOnly) {
-  const { acceptList } = generateRegistry(reg, { outDir });
-  console.log(`✓ generated ${path.relative(process.cwd(), outDir) || '.'} (commit ${acceptList.commit.slice(0, 7)}, ${Object.keys(acceptList.predicates).length} accept-list entries)`);
+  const { acceptList, purposeList } = generateRegistry(reg, { outDir });
+  console.log(`✓ generated ${path.relative(process.cwd(), outDir) || '.'} (commit ${acceptList.commit.slice(0, 7)}, ${Object.keys(acceptList.predicates).length} accept-list entries${purposeList ? `, ${Object.keys(purposeList.purposes).length} purpose-list entries` : ''})`);
 }

@@ -1,0 +1,21 @@
+{
+  "@context": "https://registry.example/meta/v1/purpose-context.jsonld",
+  "id": "https://registry.example/purpose/example-use/1",
+  "type": "Purpose",
+  "name": "example-use",
+  "version": 1,
+  "status": "draft",
+  "label": { "en": "example use", "nl": "voorbeeldgebruik" },
+  "description": { "en": "To do the example thing you asked for." },
+  "definition": { "en": "The recipient uses the data to do the example thing the principal asked of it." },
+  "includes": ["reading what the example thing needs"],
+  "excludes": ["anything the example thing does not need"],
+  "examples": ["A recipient reads a preference to do the example thing."],
+  "mappings": [
+    { "term": "exampleUse", "scheme": "https://other.example/purposes", "relation": "exactMatch" }
+  ],
+  "definedIn": null,
+  "governedBy": "https://example.community/governance-framework",
+  "supersedes": null,
+  "supersededBy": null
+}

@@ -12,6 +12,9 @@ import path from 'node:path';
 
 const REQUIRED_STRINGS = ['namespace', 'contextBase', 'metaBase', 'siteUrl', 'siteName', 'hostName', 'indexName', 'maintainer', 'repository'];
 const HTTPS_PREFIXES = ['namespace', 'contextBase', 'metaBase', 'siteUrl'];
+// Optional: a registry that publishes no purpose vocabulary omits it (or sets
+// it to null), and then purposes/ must be empty.
+const OPTIONAL_PREFIXES = ['purposeNamespace'];
 
 export const META_VERSION = 'v1';
 
@@ -38,8 +41,13 @@ export function parseConfig(raw, where = 'registry.config.json') {
   if (!('governedBy' in raw) || (raw.governedBy !== null && typeof raw.governedBy !== 'string')) {
     throw new Error(`${where}: "governedBy" is required (null for a working-group registry, a URL for a community one)`);
   }
+  for (const k of OPTIONAL_PREFIXES) {
+    if (k in raw && raw[k] !== null && (typeof raw[k] !== 'string' || raw[k].length === 0)) {
+      throw new Error(`${where}: "${k}" must be a non-empty string, or null when the registry publishes none`);
+    }
+  }
   let origin = null;
-  for (const k of HTTPS_PREFIXES) {
+  for (const k of [...HTTPS_PREFIXES, ...OPTIONAL_PREFIXES.filter((k) => typeof raw[k] === 'string')]) {
     let u;
     try {
       u = new URL(raw[k]);
@@ -63,11 +71,26 @@ export function parseConfig(raw, where = 'registry.config.json') {
   const registryPath = path.posix.dirname(namespacePath);
   // The home page is written to `<registryPath>.html`, so it must not be where
   // another index page goes, or the build silently overwrites that page.
-  for (const [k, p] of [['contextBase', contextPath], ['metaBase', metaPath]]) {
+  const purposeNamespace = typeof raw.purposeNamespace === 'string' ? raw.purposeNamespace : null;
+  const purposeNamespacePath = purposeNamespace ? stripTrailingSlash(new URL(purposeNamespace).pathname) : '';
+  const bases = [['contextBase', contextPath], ['metaBase', metaPath], ...(purposeNamespace ? [['purposeNamespace', purposeNamespacePath]] : [])];
+  for (const [k, p] of bases) {
     if (p === registryPath) throw new Error(`${where}: "${k}" (${p}) is the parent of "namespace", which is where the registry's home page goes; put it beside the namespace instead`);
+  }
+  // The purpose vocabulary is a sibling of the predicate namespace, never
+  // inside it or around it: every <namespace><name>/<n> is a predicate and
+  // every <purposeNamespace><name>/<n> is a purpose, and nothing is both.
+  if (purposeNamespace) {
+    for (const [k, p] of [['namespace', namespacePath], ['contextBase', contextPath], ['metaBase', metaPath]]) {
+      if (p === purposeNamespacePath || p.startsWith(purposeNamespacePath + '/') || purposeNamespacePath.startsWith(p + '/')) {
+        throw new Error(`${where}: "purposeNamespace" (${purposeNamespacePath}) and "${k}" (${p}) overlap; each vocabulary gets its own sibling path`);
+      }
+    }
   }
   return Object.freeze({
     ...raw,
+    purposeNamespace,
+    purposeNamespacePath,
     metaVersion: META_VERSION,
     origin,
     host: ns.host,
@@ -77,7 +100,10 @@ export function parseConfig(raw, where = 'registry.config.json') {
     metaPath,
     metaContextUrl: `${raw.metaBase}${META_VERSION}/predicate-context.jsonld`,
     metaSchemaUrl: `${raw.metaBase}${META_VERSION}/predicate.schema.json`,
-    acceptListSchemaUrl: `${raw.metaBase}${META_VERSION}/accept-list.schema.json`
+    acceptListSchemaUrl: `${raw.metaBase}${META_VERSION}/accept-list.schema.json`,
+    purposeContextUrl: `${raw.metaBase}${META_VERSION}/purpose-context.jsonld`,
+    purposeSchemaUrl: `${raw.metaBase}${META_VERSION}/purpose.schema.json`,
+    purposeListSchemaUrl: `${raw.metaBase}${META_VERSION}/purpose-list.schema.json`
   });
 }
 

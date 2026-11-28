@@ -18,6 +18,7 @@ function layout(reg, { title, body, alternates = [], crumbs = [], host = false }
   const nav = host ? [] : [
     { href: config.registryPath, text: config.siteName },
     { href: config.namespacePath, text: 'Predicates' },
+    ...(config.purposeNamespace ? [{ href: config.purposeNamespacePath, text: 'Purposes' }] : []),
     { href: config.contextPath, text: 'Contexts' },
     { href: `${config.metaPath}/${config.metaVersion}/predicate.schema.json`, text: 'Definition format' },
     ...(config.registryPath === '/' ? [] : [{ href: '/', text: 'All registries' }])
@@ -72,7 +73,7 @@ export function landingPage(reg) {
 <p>Registries served from this host, each under its own path.</p>
 <dl class="resources">
   <dt><a href="${esc(config.registryPath)}">${esc(config.siteName)}</a></dt>
-  <dd>${esc(config.maintainer)}. The predicate namespace <code>${esc(config.namespace)}</code>, the credential contexts and the definition format, under <code>${esc(config.registryPath)}/</code>.</dd>
+  <dd>${esc(config.maintainer)}. The predicate namespace <code>${esc(config.namespace)}</code>${config.purposeNamespace ? `, the purpose vocabulary <code>${esc(config.purposeNamespace)}</code>` : ''}, the credential contexts and the definition format, under <code>${esc(config.registryPath)}/</code>.</dd>
 </dl>
 `;
   return layout(reg, { title: 'Registries', body, host: true });
@@ -83,14 +84,16 @@ export function homePage(reg) {
   const { config } = reg;
   const body = `
 <h1>${esc(config.siteName)}</h1>
-<p>Predicates for the Verifiable Statement Credential (VSC) of the <a href="https://github.com/trustoverip/dtgwg-cred-spec">DTG Credentials Core Specification</a>, the JSON-LD contexts its credentials list, and the format the predicates are defined in. A predicate is an absolute IRI that a verifier accepts by configuration; every predicate here resolves to its definition at that IRI.</p>
+<p>Predicates for the Verifiable Statement Credential (VSC) of the <a href="https://github.com/trustoverip/dtgwg-cred-spec">DTG Credentials Core Specification</a>, the JSON-LD contexts its credentials list, ${config.purposeNamespace ? 'the purposes of use that a grant, an access-control entry or an authority credential names, ' : ''}and the formats they are defined in. A predicate is an absolute IRI that a verifier accepts by configuration; every predicate here resolves to its definition at that IRI.</p>
 <dl class="resources">
   <dt><a href="${esc(config.namespacePath)}">${esc(config.namespace)}</a></dt>
   <dd>The predicate namespace: ${reg.predicates.length} published term${reg.predicates.length === 1 ? '' : 's'}. Machine-readable at the same URL: <code>Accept: application/ld+json</code> for the vocabulary graph, <code>Accept: application/json</code> for the <a href="${esc(config.namespacePath)}/accept-list.json">accept-list</a> verifiers import.</dd>
-  <dt><a href="${esc(config.contextPath)}">${esc(config.contextBase)}</a></dt>
+${config.purposeNamespace ? `  <dt><a href="${esc(config.purposeNamespacePath)}">${esc(config.purposeNamespace)}</a></dt>
+  <dd>The purpose vocabulary: ${reg.purposes.length} published purpose${reg.purposes.length === 1 ? '' : 's'} of use, the codes a grant names for what data may be used for. Machine-readable at the same URL: <code>Accept: application/ld+json</code> for the vocabulary graph, <code>Accept: application/json</code> for the <a href="${esc(config.purposeNamespacePath)}/purposes.json">purpose list</a>.</dd>
+` : ''}  <dt><a href="${esc(config.contextPath)}">${esc(config.contextBase)}</a></dt>
   <dd>Frozen JSON-LD contexts for credentials, one per version.</dd>
   <dt><a href="${esc(config.metaPath)}/${esc(config.metaVersion)}/predicate.schema.json">${esc(config.metaBase)}${esc(config.metaVersion)}/</a></dt>
-  <dd>The definition format: the JSON Schema every predicate definition validates against, its JSON-LD context, and the accept-list schema.</dd>
+  <dd>The definition format: the JSON Schema every predicate definition validates against, its JSON-LD context, and the accept-list schema${config.purposeNamespace ? `; and the same three for purposes (<a href="${esc(config.metaPath)}/${esc(config.metaVersion)}/purpose.schema.json"><code>purpose.schema.json</code></a>)` : ''}.</dd>
 </dl>
 <p>Rules for admission, versioning and review are in <a href="${esc(config.repository)}/blob/main/GOVERNANCE.md">GOVERNANCE.md</a>.</p>
 `;
@@ -192,6 +195,101 @@ ${examples ? `<h2>Examples</h2>\n${examples}` : ''}
   });
 }
 
+export function purposeIndexPage(reg) {
+  const { config } = reg;
+  const pp = config.purposeNamespacePath;
+  const groups = [...groupByName(reg.purposes)];
+  const rows = groups.flatMap(([name, versions]) => versions.map((p) => `<tr>
+  <td><a href="${esc(pp)}/${esc(name)}/${esc(p.version)}"><code>${esc(name)}/${esc(p.version)}</code></a></td>
+  <td>${esc(p.def.label.en)}</td>
+  <td>${statusBadge(p.def.status)}</td>
+  <td>${esc(p.def.description.en)}</td>
+</tr>`));
+  const body = `
+<h1>Purposes</h1>
+<p>Namespace <code>${esc(config.purposeNamespace)}</code>. Each row is one immutable purpose of use: a code naming what a party may use data it obtains for. A purpose IRI is <code>${esc(config.purposeNamespace)}&lt;name&gt;/&lt;n&gt;</code>, compared byte-exact and never resolved at use. It is what a Human Context Protocol grant carries as a purpose <code>code</code>, and what an access-control entry or an authority credential lists in <code>purposes</code>. The bare <code>&lt;name&gt;</code> path is a documentation page, never a purpose.</p>
+<p>Machine-readable: <a href="${esc(pp)}/vocab.jsonld"><code>vocab.jsonld</code></a> (the whole graph) and <a href="${esc(pp)}/purposes.json"><code>purposes.json</code></a> (for configuration; <a href="${esc(pp)}/purposes.json.sha256">sha256</a>), also served at this URL under content negotiation.</p>
+${rows.length ? `<table class="index"><thead><tr><th>Purpose</th><th>Label</th><th>Status</th><th>Description shown to a person</th></tr></thead><tbody>${rows.join('')}</tbody></table>` : '<p><em>No purposes are published yet.</em></p>'}
+`;
+  return layout(reg, {
+    title: 'Purposes',
+    body,
+    crumbs: [{ href: config.registryPath, text: 'Home' }, { text: 'Purposes' }],
+    alternates: [
+      { type: 'application/ld+json', href: `${pp}/vocab.jsonld` },
+      { type: 'application/json', href: `${pp}/purposes.json` }
+    ]
+  });
+}
+
+export function purposeHistoryPage(reg, name, versions) {
+  const { config } = reg;
+  const pp = config.purposeNamespacePath;
+  const rows = versions.map((p) => `<tr>
+  <td><a href="${esc(pp)}/${esc(name)}/${esc(p.version)}"><code>${esc(p.iri)}</code></a></td>
+  <td>${statusBadge(p.def.status)}</td>
+  <td>${esc(p.def.since ?? '')}</td>
+  <td>${esc(p.def.deprecatedOn ?? '')}</td>
+  <td>${p.def.supersededBy ? link(p.def.supersededBy) : ''}</td>
+</tr>`);
+  const body = `
+<h1><code>${esc(name)}</code></h1>
+<p class="notice">This page is the version history of <code>${esc(name)}</code>. <strong><code>${esc(config.purposeNamespace)}${esc(name)}</code> is not a purpose</strong> and must not appear in a grant, an entry or a credential; each version below is its own immutable purpose, and there is no compatibility between versions.</p>
+<table class="index"><thead><tr><th>Purpose</th><th>Status</th><th>Since</th><th>Deprecated</th><th>Superseded by</th></tr></thead><tbody>${rows.join('')}</tbody></table>
+`;
+  return layout(reg, { title: name, body, crumbs: [{ href: config.registryPath, text: 'Home' }, { href: pp, text: 'Purposes' }, { text: name }] });
+}
+
+export function purposePage(reg, p) {
+  const { config } = reg;
+  const d = p.def;
+  const pp = config.purposeNamespacePath;
+  const base = `${pp}/${p.name}/${p.version}`;
+  const list = (items) => `<ul>${items.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`;
+  const examples = p.examples.map((ex) => `<h3><code>examples/${esc(ex.file)}</code></h3><pre><code>${esc(JSON.stringify(ex.doc, null, 2))}</code></pre>`).join('\n');
+  const lifecycle = [
+    d.since ? `Since ${esc(d.since)}.` : '',
+    d.deprecatedOn ? `Deprecated on ${esc(d.deprecatedOn)}.` : '',
+    d.supersedes ? `Supersedes ${link(d.supersedes)}.` : '',
+    d.supersededBy ? `Superseded by ${link(d.supersededBy)}.` : '',
+    d.convergenceRecord ? `Convergence record: ${link(d.convergenceRecord)}.` : ''
+  ].filter(Boolean).join(' ');
+  const mappings = d.mappings.length
+    ? `<ul>${d.mappings.map((m) => `<li><code>${esc(m.relation)}</code> <code>${esc(m.term)}</code>, defined in ${link(m.scheme)}${m.note ? `: ${esc(m.note)}` : ''}</li>`).join('')}</ul>`
+    : '<em>none</em>';
+  const body = `
+<h1><code>${esc(p.name)}/${esc(p.version)}</code> ${statusBadge(d.status)}</h1>
+<p class="iri">Purpose IRI, exact bytes: <code id="iri">${esc(p.iri)}</code></p>
+<p>Machine-readable: <a href="${esc(base)}/purpose.jsonld"><code>purpose.jsonld</code></a>, also served at this URL with <code>Accept: application/ld+json</code>. Definition format: <a href="${esc(config.purposeSchemaUrl)}"><code>purpose.schema.json</code></a>.</p>
+${lifecycle ? `<p class="lifecycle">${lifecycle}</p>` : ''}
+
+<h2>Definition</h2>
+<table class="def"><tbody>
+<tr><th>Label</th><td>${langTable(d.label)}</td></tr>
+<tr><th>Description shown to a person</th><td>${langTable(d.description)}</td></tr>
+<tr><th>Meaning</th><td>${langTable(d.definition)}</td></tr>
+<tr><th>Covers</th><td>${list(d.includes)}</td></tr>
+<tr><th>Does not cover</th><td>${list(d.excludes)}</td></tr>
+<tr><th>Examples of use</th><td>${list(d.examples)}</td></tr>
+<tr><th>Mappings (informative)</th><td>${mappings}</td></tr>
+<tr><th>Defined in</th><td>${link(d.definedIn)}</td></tr>
+<tr><th>Governed by</th><td>${d.governedBy ? link(d.governedBy) : '<em>the working group that maintains this registry</em>'}</td></tr>
+${d.seeAlso?.length ? `<tr><th>See also (informative)</th><td>${d.seeAlso.map(link).join('<br>')}</td></tr>` : ''}
+</tbody></table>
+<p class="bound">A purpose is a declaration, not a proof: nobody who discloses data can observe what the recipient does with it. Naming this purpose binds the recipient to what it declared and lets the declaration be recorded; it does not establish that the use stayed within it. Purposes are compared as exact strings; a mapping above never makes another term equal to this IRI.</p>
+
+${p.profileMd ? `<h2>Profile</h2>\n<div class="profile">${marked.parse(p.profileMd)}</div>` : ''}
+${examples ? `<h2>Example documents</h2>\n${examples}` : ''}
+<p class="updated">Last changed ${esc(p.updated)}.</p>
+`;
+  return layout(reg, {
+    title: `${p.name}/${p.version}`,
+    body,
+    crumbs: [{ href: config.registryPath, text: 'Home' }, { href: pp, text: 'Purposes' }, { href: `${pp}/${p.name}`, text: p.name }, { text: p.version }],
+    alternates: [{ type: 'application/ld+json', href: `${base}/purpose.jsonld` }]
+  });
+}
+
 export function contextIndexPage(reg) {
   const { config } = reg;
   const rows = reg.contexts.map((c) => `<tr><td><a href="${esc(config.contextPath)}/${esc(c.version)}"><code>${esc(config.contextBase)}${esc(c.version)}</code></a></td><td>${esc(c.updated)}</td></tr>`);
@@ -230,7 +328,7 @@ export function notFoundPage(reg) {
   const { config } = reg;
   const body = `
 <h1>Not found</h1>
-<p>There is nothing at this URL. A predicate IRI has the form <code>${esc(config.namespace)}&lt;name&gt;/&lt;n&gt;</code>; the published terms are listed at <a href="${esc(config.namespacePath)}">${esc(config.namespacePath)}</a>.</p>
+<p>There is nothing at this URL. A predicate IRI has the form <code>${esc(config.namespace)}&lt;name&gt;/&lt;n&gt;</code>; the published terms are listed at <a href="${esc(config.namespacePath)}">${esc(config.namespacePath)}</a>.${config.purposeNamespace ? ` A purpose IRI has the form <code>${esc(config.purposeNamespace)}&lt;name&gt;/&lt;n&gt;</code>; the published purposes are listed at <a href="${esc(config.purposeNamespacePath)}">${esc(config.purposeNamespacePath)}</a>.` : ''}</p>
 <p>If you followed a predicate IRI from a credential and arrived here, the term is not published by this registry. A verifier configured against this registry rejects such a credential, as the specification's <em>Predicate Handling</em> requires.</p>
 `;
   return layout(reg, { title: 'Not found', body });

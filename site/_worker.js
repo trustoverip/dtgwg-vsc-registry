@@ -10,10 +10,11 @@
 // Everything else is handed to the asset store unchanged, so a missing file is
 // an honest 404 and never a shell page.
 //
-// `{{namespacePath}}` and `{{contextPath}}` are filled from
-// registry.config.json when the build copies this file into dist/. Do not edit
-// dist/_worker.js. `createHandler` takes the paths as arguments so the tests
-// can run the source file directly.
+// `{{namespacePath}}`, `{{purposeNamespacePath}}` and `{{contextPath}}` are
+// filled from registry.config.json when the build copies this file into dist/
+// (the purpose path is empty when the registry publishes no purposes). Do not
+// edit dist/_worker.js. `createHandler` takes the paths as arguments so the
+// tests can run the source file directly.
 
 const NAME = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 const VERSION = /^[1-9][0-9]*$/;
@@ -59,10 +60,22 @@ function notAcceptable(msg) {
   return new Response(msg + '\n', { status: 406, headers: { 'Content-Type': 'text/plain; charset=utf-8', Vary: 'Accept' } });
 }
 
-export function createHandler({ namespacePath = '{{namespacePath}}', contextPath = '{{contextPath}}' } = {}) {
+export function createHandler({ namespacePath = '{{namespacePath}}', purposeNamespacePath = '{{purposeNamespacePath}}', contextPath = '{{contextPath}}' } = {}) {
   const ns = namespacePath;
   const ctx = contextPath;
-  const frozenRe = new RegExp(`^(${escapeRe(ns)}/[a-z][a-z0-9-]*/[1-9][0-9]*(/|\\.html$|$)|${escapeRe(ctx)}/v[1-9][0-9]*(\\.|$))`);
+  // The term vocabularies: each `<path>/<name>/<n>` is one immutable term,
+  // served as HTML or as its definition file, with a list at `<path>`.
+  const vocabs = [
+    { path: ns, kind: 'predicate', def: 'predicate.jsonld', list: 'accept-list.json' },
+    ...(purposeNamespacePath ? [{ path: purposeNamespacePath, kind: 'purpose', def: 'purpose.jsonld', list: 'purposes.json' }] : [])
+  ];
+  const termAlt = vocabs.map((v) => `${escapeRe(v.path)}/[a-z][a-z0-9-]*/[1-9][0-9]*(/|\\.html$|$)`).join('|');
+  const frozenRe = new RegExp(`^(${termAlt}|${escapeRe(ctx)}/v[1-9][0-9]*(\\.|$))`);
+  // The vocabulary `path` lies under, with the remaining segments, or null.
+  const vocabOf = (path) => {
+    for (const v of vocabs) if (path.startsWith(v.path + '/')) return { v, seg: path.slice(v.path.length + 1).split('/') };
+    return null;
+  };
 
   return {
     async fetch(request, env) {
@@ -87,17 +100,19 @@ export function createHandler({ namespacePath = '{{namespacePath}}', contextPath
       let target = path;
       let type = null;
 
-      if (path === ns) {
-        if (want === LD) { target = `${ns}/vocab.jsonld`; type = LD; }
-        else if (want === JSON_) { target = `${ns}/accept-list.json`; type = JSON_; }
-      } else if (path.startsWith(ns + '/')) {
-        const seg = path.slice(ns.length + 1).split('/');
+      const root = vocabs.find((v) => v.path === path);
+      const under = root ? null : vocabOf(path);
+      if (root) {
+        if (want === LD) { target = `${path}/vocab.jsonld`; type = LD; }
+        else if (want === JSON_) { target = `${path}/${root.list}`; type = JSON_; }
+      } else if (under) {
+        const { v, seg } = under;
         if (seg.length === 1 && NAME.test(seg[0])) {
           // The bare name is documentation, never a term (GOVERNANCE §2.2).
-          if (want !== HTML) return notAcceptable(`${url.origin}${path} is not a predicate; a predicate IRI carries a version: ${path}/<n>`);
+          if (want !== HTML) return notAcceptable(`${url.origin}${path} is not a ${v.kind}; a ${v.kind} IRI carries a version: ${path}/<n>`);
         } else if (seg.length === 2 && NAME.test(seg[0]) && VERSION.test(seg[1])) {
-          if (want === LD) { target = `${path}/predicate.jsonld`; type = LD; }
-          else if (want === JSON_) return notAcceptable('A predicate definition is JSON-LD; request Accept: application/ld+json');
+          if (want === LD) { target = `${path}/${v.def}`; type = LD; }
+          else if (want === JSON_) return notAcceptable(`A ${v.kind} definition is JSON-LD; request Accept: application/ld+json`);
         }
       } else if (path.startsWith(ctx + '/')) {
         const seg = path.slice(ctx.length + 1);
@@ -125,9 +140,9 @@ export function createHandler({ namespacePath = '{{namespacePath}}', contextPath
       const declared = type ?? typeFromPath(target);
       if (declared) headers.set('Content-Type', declared === HTML ? 'text/html; charset=utf-8' : declared);
       headers.set('Cache-Control', frozenRe.test(target) ? 'public, max-age=31536000, immutable' : 'public, max-age=300');
-      if (type === null && declared === HTML && path.startsWith(ns + '/')) {
-        const seg = path.slice(ns.length + 1).split('/');
-        if (seg.length === 2 && NAME.test(seg[0]) && VERSION.test(seg[1])) headers.set('Link', `<${path}/predicate.jsonld>; rel="alternate"; type="application/ld+json"`);
+      if (type === null && declared === HTML && under) {
+        const { v, seg } = under;
+        if (seg.length === 2 && NAME.test(seg[0]) && VERSION.test(seg[1])) headers.set('Link', `<${path}/${v.def}>; rel="alternate"; type="application/ld+json"`);
       }
       return new Response(notModified ? null : res.body, { status: res.status, headers });
     }

@@ -1,6 +1,6 @@
 # Local runs of the registry tooling, always inside the container.
 #
-#   docker compose run --rm validate     validate predicates/ against meta/ (no writes)
+#   docker compose run --rm validate     validate predicates/ and purposes/ against meta/ (no writes)
 #   docker compose run --rm build        validate + generate dist/
 #   docker compose run --rm test         unit tests: validator fixtures, worker routing
 #   docker compose run --rm check        everything CI runs

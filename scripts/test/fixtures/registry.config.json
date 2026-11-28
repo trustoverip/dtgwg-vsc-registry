@@ -1,5 +1,6 @@
 {
   "namespace": "https://registry.example/vocab/",
+  "purposeNamespace": "https://registry.example/purpose/",
   "contextBase": "https://registry.example/context/",
   "metaBase": "https://registry.example/meta/",
   "siteUrl": "https://registry.example/",

@@ -79,7 +79,10 @@ export function loadRegistry({ root = REPO_ROOT, configFile } = {}) {
   const meta = {
     predicateSchema: JSON.parse(substitute(fs.readFileSync(path.join(metaDir, 'predicate.schema.json'), 'utf8'), config)),
     predicateContext: JSON.parse(substitute(fs.readFileSync(path.join(metaDir, 'predicate-context.jsonld'), 'utf8'), config)),
-    acceptListSchema: JSON.parse(substitute(fs.readFileSync(path.join(metaDir, 'accept-list.schema.json'), 'utf8'), config))
+    acceptListSchema: JSON.parse(substitute(fs.readFileSync(path.join(metaDir, 'accept-list.schema.json'), 'utf8'), config)),
+    purposeSchema: JSON.parse(substitute(fs.readFileSync(path.join(metaDir, 'purpose.schema.json'), 'utf8'), config)),
+    purposeContext: JSON.parse(substitute(fs.readFileSync(path.join(metaDir, 'purpose-context.jsonld'), 'utf8'), config)),
+    purposeListSchema: JSON.parse(substitute(fs.readFileSync(path.join(metaDir, 'purpose-list.schema.json'), 'utf8'), config))
   };
 
   const predicates = [];
@@ -123,6 +126,51 @@ export function loadRegistry({ root = REPO_ROOT, configFile } = {}) {
     }
   }
 
+  // Purposes: the same folder-per-version layout as predicates, under
+  // purposes/<name>/<n>/ with purpose.jsonld as the definition.
+  const purposes = [];
+  const purposesDir = path.join(root, 'purposes');
+  const purposeNames = listDirs(purposesDir);
+  if (purposeNames.length && !config.purposeNamespace) {
+    loadErrors.push('purposes/: purpose definitions are present but registry.config.json sets no "purposeNamespace"');
+  }
+  for (const name of purposeNames) {
+    for (const version of listDirs(path.join(purposesDir, name))) {
+      const relDir = path.posix.join('purposes', name, version);
+      const dir = path.join(purposesDir, name, version);
+      const defFile = path.join(dir, 'purpose.jsonld');
+      const rec = {
+        name,
+        version,
+        relDir,
+        dir,
+        iri: `${config.purposeNamespace ?? ''}${name}/${version}`,
+        def: null,
+        profileMd: exists(path.join(dir, 'profile.md')) ? fs.readFileSync(path.join(dir, 'profile.md'), 'utf8') : null,
+        examples: [],
+        updated: lastModified(root, relDir)
+      };
+      if (!exists(defFile)) {
+        loadErrors.push(`${relDir}: purpose.jsonld is missing`);
+      } else {
+        try {
+          rec.def = readJson(defFile);
+        } catch (e) {
+          loadErrors.push(`${relDir}/purpose.jsonld: not valid JSON (${e.message})`);
+        }
+      }
+      for (const f of listFiles(path.join(dir, 'examples'))) {
+        if (!f.endsWith('.json')) continue;
+        try {
+          rec.examples.push({ file: f, doc: readJson(path.join(dir, 'examples', f)) });
+        } catch (e) {
+          loadErrors.push(`${relDir}/examples/${f}: not valid JSON (${e.message})`);
+        }
+      }
+      purposes.push(rec);
+    }
+  }
+
   const contexts = [];
   const contextsDir = path.join(root, 'contexts');
   for (const f of listFiles(contextsDir)) {
@@ -138,7 +186,7 @@ export function loadRegistry({ root = REPO_ROOT, configFile } = {}) {
     }
   }
 
-  return { root, config, meta, predicates, contexts, loadErrors, git: gitInfo(root) };
+  return { root, config, meta, predicates, purposes, contexts, loadErrors, git: gitInfo(root) };
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +206,50 @@ function formatAjvErrors(errors) {
 function objectKindOf(object) {
   if (!object || typeof object !== 'object' || Array.isArray(object)) return [];
   return ['id', 'digestMultibase', 'value'].filter((k) => k in object);
+}
+
+/**
+ * Versioning and supersession (GOVERNANCE §3, §5), shared by every kind of
+ * term: n>1 needs n-1 and supersedes exactly n-1; an in-namespace predecessor
+ * is deprecated and points forward in the same change; an external one needs
+ * a convergence record; supersededBy implies deprecated.
+ */
+function checkLineage({ p, d, loc, byIri, prefix, defFile, fail }) {
+  const n = Number(p.version);
+  const prevIri = `${prefix}${p.name}/${n - 1}`;
+  if (n > 1) {
+    if (!byIri.has(prevIri)) fail(loc, `version ${n} exists but version ${n - 1} does not`);
+    if (d.supersedes !== prevIri) fail(loc, `version ${n} must declare supersedes "${prevIri}"`);
+  }
+  if (typeof d.supersedes === 'string') {
+    if (d.supersedes.startsWith(prefix)) {
+      const target = byIri.get(d.supersedes);
+      if (!target) fail(loc, `supersedes "${d.supersedes}", which is not in this registry`);
+      else if (target.def) {
+        if (target.def.status !== 'deprecated') fail(loc, `supersedes "${d.supersedes}", which must be marked deprecated in the same change`);
+        if (target.def.supersededBy !== p.iri) fail(`${target.relDir}/${defFile}`, `must declare supersededBy "${p.iri}"`);
+      }
+    } else {
+      // Convergence from a community namespace (GOVERNANCE §5): the link is mandatory.
+      if (n !== 1) fail(loc, 'only version 1 of a term can supersede a term outside this namespace');
+      if (typeof d.convergenceRecord !== 'string') fail(loc, `supersedes the external term "${d.supersedes}" and therefore requires convergenceRecord`);
+    }
+  } else if (typeof d.convergenceRecord === 'string') {
+    fail(loc, 'convergenceRecord is only meaningful with an external supersedes');
+  }
+  if (typeof d.supersededBy === 'string') {
+    if (d.status !== 'deprecated') fail(loc, 'supersededBy is set, so status must be deprecated');
+    if (d.supersededBy.startsWith(prefix) && !byIri.has(d.supersededBy)) fail(loc, `supersededBy "${d.supersededBy}" is not in this registry`);
+    if (d.supersededBy === p.iri) fail(loc, 'a term cannot supersede itself');
+  }
+}
+
+/** True when `doc` carries `s` as a string value anywhere, byte-exact. */
+function carriesString(doc, s) {
+  if (typeof doc === 'string') return doc === s;
+  if (Array.isArray(doc)) return doc.some((v) => carriesString(v, s));
+  if (doc && typeof doc === 'object') return Object.values(doc).some((v) => carriesString(v, s));
+  return false;
 }
 
 export function validateRegistry(reg) {
@@ -227,34 +319,7 @@ export function validateRegistry(reg) {
       }
     }
 
-    // Versioning (GOVERNANCE §3): n>1 needs n-1, and supersedes exactly n-1.
-    const n = Number(p.version);
-    const prevIri = `${config.namespace}${p.name}/${n - 1}`;
-    if (n > 1) {
-      if (!byIri.has(prevIri)) fail(loc, `version ${n} exists but version ${n - 1} does not`);
-      if (d.supersedes !== prevIri) fail(loc, `version ${n} must declare supersedes "${prevIri}"`);
-    }
-    if (typeof d.supersedes === 'string') {
-      if (d.supersedes.startsWith(config.namespace)) {
-        const target = byIri.get(d.supersedes);
-        if (!target) fail(loc, `supersedes "${d.supersedes}", which is not in this registry`);
-        else if (target.def) {
-          if (target.def.status !== 'deprecated') fail(loc, `supersedes "${d.supersedes}", which must be marked deprecated in the same change`);
-          if (target.def.supersededBy !== p.iri) fail(`${target.relDir}/predicate.jsonld`, `must declare supersededBy "${p.iri}"`);
-        }
-      } else {
-        // Convergence from a community namespace (GOVERNANCE §5): the link is mandatory.
-        if (n !== 1) fail(loc, 'only version 1 of a term can supersede a term outside this namespace');
-        if (typeof d.convergenceRecord !== 'string') fail(loc, `supersedes the external term "${d.supersedes}" and therefore requires convergenceRecord`);
-      }
-    } else if (typeof d.convergenceRecord === 'string') {
-      fail(loc, 'convergenceRecord is only meaningful with an external supersedes');
-    }
-    if (typeof d.supersededBy === 'string') {
-      if (d.status !== 'deprecated') fail(loc, 'supersededBy is set, so status must be deprecated');
-      if (d.supersededBy.startsWith(config.namespace) && !byIri.has(d.supersededBy)) fail(loc, `supersededBy "${d.supersededBy}" is not in this registry`);
-      if (d.supersededBy === p.iri) fail(loc, 'a term cannot supersede itself');
-    }
+    checkLineage({ p, d, loc, byIri, prefix: config.namespace, defFile: 'predicate.jsonld', fail });
 
     // Examples (PLAN §1.5 step 3): every example must be a credential the profile accepts.
     for (const ex of p.examples) {
@@ -302,12 +367,77 @@ export function validateRegistry(reg) {
     liveLabels.set(label, p.name);
   }
 
+  validatePurposes(reg, fail);
+
   // Contexts: each must be a JSON-LD context document.
   for (const c of reg.contexts) {
     if (!c.doc || typeof c.doc !== 'object' || !('@context' in c.doc)) fail(`contexts/${c.file}`, 'must be a JSON-LD context document with a top-level "@context"');
   }
 
   return errors;
+}
+
+
+// The purpose vocabulary (meta/purpose.schema.json): the identifier, grammar
+// and lineage rules of the predicates, applied under the purpose namespace.
+function validatePurposes(reg, fail) {
+  const { config } = reg;
+  if (!config.purposeNamespace) return; // loadRegistry already reported any purposes/ folder
+  const ajv = newAjv();
+  const validateDef = ajv.compile(reg.meta.purposeSchema);
+  ajv.compile(reg.meta.purposeListSchema); // the schema we publish must itself compile
+  const byIri = new Map(reg.purposes.map((p) => [p.iri, p]));
+
+  for (const p of reg.purposes) {
+    const loc = `${p.relDir}/purpose.jsonld`;
+    if (!NAME_RE.test(p.name)) fail(p.relDir, `folder name "${p.name}" is not a valid purpose name`);
+    if (!VERSION_RE.test(p.version)) fail(p.relDir, `folder "${p.version}" is not a valid version (positive integer, no leading zeros)`);
+    if (!p.def) continue;
+    if (!validateDef(p.def)) {
+      fail(loc, formatAjvErrors(validateDef.errors));
+      continue;
+    }
+    const d = p.def;
+    p.schemaValid = true;
+
+    if (d.id !== p.iri) fail(loc, `id is "${d.id}" but the folder path gives "${p.iri}"`);
+    if (d.id !== d.id.normalize('NFC')) fail(loc, 'id is not in Unicode Normalization Form C');
+    if (d.name !== p.name) fail(loc, `name "${d.name}" does not match folder "${p.name}"`);
+    if (String(d.version) !== p.version) fail(loc, `version ${d.version} does not match folder "${p.version}"`);
+
+    checkLineage({ p, d, loc, byIri, prefix: config.purposeNamespace, defFile: 'purpose.jsonld', fail });
+
+    // A mapping never names this registry's own vocabulary: a relation between
+    // two of its purposes is supersedes/supersededBy, not a mapping.
+    for (const m of d.mappings) {
+      if (m.term.startsWith(config.purposeNamespace)) fail(loc, `mapping to "${m.term}" names this registry's own purpose; use supersedes or supersededBy`);
+    }
+
+    // Example documents (an HCP authorization detail, a VAC) must carry the IRI byte-exact.
+    for (const ex of p.examples) {
+      if (!carriesString(ex.doc, p.iri)) fail(`${p.relDir}/examples/${ex.file}`, `does not carry the purpose IRI "${p.iri}" byte-exact`);
+    }
+  }
+
+  // One identifier per concept (GOVERNANCE §5 criterion 5): two live purposes
+  // must not share an English label, nor both claim exactMatch to one term.
+  const liveLabels = new Map();
+  const exact = new Map();
+  for (const p of reg.purposes) {
+    if (!p.def || !p.schemaValid || p.def.status === 'deprecated') continue;
+    const loc = `${p.relDir}/purpose.jsonld`;
+    const label = p.def.label.en.trim().toLowerCase();
+    const other = liveLabels.get(label);
+    if (other && other !== p.name) fail(loc, `English label "${p.def.label.en}" is already used by "${other}"`);
+    liveLabels.set(label, p.name);
+    for (const m of p.def.mappings) {
+      if (m.relation !== 'exactMatch') continue;
+      const key = `${m.scheme} ${m.term}`;
+      const prev = exact.get(key);
+      if (prev && prev !== p.name) fail(loc, `exactMatch to "${m.term}" is already claimed by "${prev}"`);
+      exact.set(key, p.name);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -361,6 +491,31 @@ export function buildVocab(reg) {
   };
 }
 
+export function buildPurposeList(reg) {
+  const purposes = {};
+  for (const p of reg.purposes) {
+    const d = p.def;
+    purposes[p.iri] = { status: d.status, label: d.label, description: d.description, supersededBy: d.supersededBy };
+  }
+  return {
+    $schema: reg.config.purposeListSchemaUrl,
+    namespace: reg.config.purposeNamespace,
+    commit: reg.git.commit,
+    generatedAt: new Date().toISOString(),
+    purposes
+  };
+}
+
+export function buildPurposeVocab(reg) {
+  return {
+    '@context': reg.config.purposeContextUrl,
+    '@graph': reg.purposes.map((p) => {
+      const { '@context': _omit, ...rest } = p.def;
+      return rest;
+    })
+  };
+}
+
 export function generateRegistry(reg, { outDir, siteDir = path.join(REPO_ROOT, 'site') } = {}) {
   if (!outDir) throw new Error('outDir is required');
   const { config } = reg;
@@ -382,6 +537,9 @@ export function generateRegistry(reg, { outDir, siteDir = path.join(REPO_ROOT, '
   writeFile(outDir, `${metaOut}/predicate.schema.json`, stableJson(reg.meta.predicateSchema));
   writeFile(outDir, `${metaOut}/predicate-context.jsonld`, stableJson(reg.meta.predicateContext));
   writeFile(outDir, `${metaOut}/accept-list.schema.json`, stableJson(reg.meta.acceptListSchema));
+  writeFile(outDir, `${metaOut}/purpose.schema.json`, stableJson(reg.meta.purposeSchema));
+  writeFile(outDir, `${metaOut}/purpose-context.jsonld`, stableJson(reg.meta.purposeContext));
+  writeFile(outDir, `${metaOut}/purpose-list.schema.json`, stableJson(reg.meta.purposeListSchema));
 
   // Predicates: byte-copies of every frozen file, plus one HTML page per URL.
   // HTML pages are `<path>.html` rather than `<path>/index.html` so the canonical
@@ -402,6 +560,28 @@ export function generateRegistry(reg, { outDir, siteDir = path.join(REPO_ROOT, '
   writeFile(outDir, `${ns}/accept-list.json.sha256`, sha256(acceptListJson) + '  accept-list.json\n');
   writeFile(outDir, `${ns}/vocab.jsonld`, stableJson(buildVocab(reg)));
   writeFile(outDir, `${ns}.html`, render.namespaceIndexPage(reg));
+
+  // Purposes: the same shape under the purpose namespace. The namespace URL
+  // negotiates to the vocabulary graph (ld+json) or the purpose list (json).
+  let purposeList = null;
+  if (config.purposeNamespace) {
+    const pp = config.purposeNamespacePath; // e.g. /dtg/purpose
+    for (const p of reg.purposes) {
+      const base = `${pp}/${p.name}/${p.version}`;
+      writeFile(outDir, `${base}/purpose.jsonld`, stableJson(p.def));
+      for (const ex of p.examples) writeFile(outDir, `${base}/examples/${ex.file}`, fs.readFileSync(path.join(p.dir, 'examples', ex.file)));
+      writeFile(outDir, `${base}.html`, render.purposePage(reg, p));
+    }
+    for (const [name, versions] of groupByName(reg.purposes)) {
+      writeFile(outDir, `${pp}/${name}.html`, render.purposeHistoryPage(reg, name, versions));
+    }
+    purposeList = buildPurposeList(reg);
+    const purposeListJson = stableJson(purposeList);
+    writeFile(outDir, `${pp}/purposes.json`, purposeListJson);
+    writeFile(outDir, `${pp}/purposes.json.sha256`, sha256(purposeListJson) + '  purposes.json\n');
+    writeFile(outDir, `${pp}/vocab.jsonld`, stableJson(buildPurposeVocab(reg)));
+    writeFile(outDir, `${pp}.html`, render.purposeIndexPage(reg));
+  }
 
   // Contexts: byte-copies, frozen.
   for (const c of reg.contexts) {
@@ -429,9 +609,10 @@ export function generateRegistry(reg, { outDir, siteDir = path.join(REPO_ROOT, '
     commit: reg.git.commit,
     builtAt: acceptList.generatedAt,
     namespace: config.namespace,
+    ...(config.purposeNamespace ? { purposeNamespace: config.purposeNamespace } : {}),
     files
   }));
-  return { acceptList };
+  return { acceptList, purposeList };
 }
 
 export function groupByName(predicates) {

@@ -1,0 +1,6 @@
+{
+  "type": "https://hcp.example/spec/authorization/context-access",
+  "actions": ["read"],
+  "categories": ["general_preferences"],
+  "purposes": [{ "code": "https://registry.example/purpose/example-use/1", "description": "To do the example thing you asked for." }]
+}
